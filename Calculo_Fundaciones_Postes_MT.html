@@ -212,7 +212,15 @@ table.rows input,table.rows select{padding:3px 4px;font-size:12.5px}
   <label>Relación Cb / Ct (fondo / pared)<input id="cbF" type="number" step="any" value="1.2"></label>
   <label>Tensión admisible σadm (kg/cm²)<input id="sig" type="number" step="any" value="1.5"></label>
   <label>Giro admisible tg α<input id="tga" type="number" step="any" value="0.01"></label>
-  <div class="full hint">Los suelos del Chaco suelen ser limo-arcillosos y húmedos. Si tenés estudio de suelos, cargá el C medido.</div>
+  <label>Factor de σadm en el borde del fondo<input id="kSig" type="number" step="any" value="1.3"></label>
+  <label>Peso específico del suelo γs (t/m³)<input id="gS" type="number" step="any" value="1.8"></label>
+  <label>Ángulo de fricción interna φ (°)<input id="phi" type="number" step="any" value="20"></label>
+  <label>Cohesión c (kg/cm²)<input id="coh" type="number" step="any" value="0.2"></label>
+  <label>Rozamiento hormigón–suelo μ<input id="mu" type="number" step="any" value="0.24"></label>
+  <label>Coef. seguridad empuje pasivo<input id="FSp" type="number" step="any" value="1"></label>
+  <label class="chk full"><input type="checkbox" id="napa"> Hay napa freática</label>
+  <label id="lbZw">Profundidad de la napa bajo el terreno (m)<input id="zw" type="number" step="any" value="1.0"></label>
+  <div class="full hint">Los suelos del Chaco suelen ser limo-arcillosos y húmedos. Con estudio de suelos, cargá C, γs, φ y c medidos; al elegir un tipo de suelo se cargan valores orientativos. μ se propone como tg(2/3·φ). El factor de borde permite que la presión máxima en el canto del fondo supere σadm (habitual 1,25 a 1,33).</div>
 </div></details>
 
 <details open><summary>6 · Fundación</summary><div class="body grid">
@@ -226,6 +234,9 @@ table.rows input,table.rows select{padding:3px 4px;font-size:12.5px}
   <label id="lbA">Lado a (m)<input id="aM" type="number" step="any" value="1.0"></label>
   <label id="lbB">Lado b (m)<input id="bM" type="number" step="any" value="1.0"></label>
   <label>Profundidad t (m)<input id="tM" type="number" step="any" value="1.4"></label>
+  <label>Adherencia admisible poste–hormigón τadm (kg/cm²)<input id="tau" type="number" step="any" value="1.0"></label>
+  <label>Coef. seguridad al deslizamiento<input id="FSd" type="number" step="any" value="1.5"></label>
+  <label>Coef. seguridad al levantamiento<input id="FSl" type="number" step="any" value="1.5"></label>
   <div class="full hint" id="hintFund">Automático: profundidad t = e + espesor bajo el poste; el lado crece de a 5 cm hasta verificar. Si supera 4 m, aumenta t de a 10 cm.</div>
 </div></details>
 
@@ -277,16 +288,16 @@ function datosPoste(sel){
   const peso = Math.round(2500*Math.PI*(dm-tw)*tw*L/10)*10;
   return {L, R, dc:+dc.toFixed(3), db:+db.toFixed(3), peso};
 }
-// Coeficiente de compresibilidad C a 2 m (kg/cm³), tabla de Sulzberger
+// [nombre, C mín, C máx (kg/cm³ a 2 m, tabla de Sulzberger), γs (t/m³), φ (°), c (kg/cm²)] — valores orientativos
 const SUELOS = [
-  ["Terreno pantanoso / turba ligera", 0.5, 1.0],
-  ["Turba pesada / arena fina de playa", 1.0, 1.5],
-  ["Arcilla saturada (depósitos de arcilla espesa)", 2.0, 3.0],
-  ["Arcilla húmeda / limo arcilloso (típico del Chaco)", 4.0, 5.0],
-  ["Arcilla seca / limo compacto", 6.0, 8.0],
-  ["Arcilla seca muy dura", 10.0, 10.0],
-  ["Arena fina a media húmeda", 8.0, 10.0],
-  ["Grava arenosa compacta", 10.0, 20.0],
+  ["Terreno pantanoso / turba ligera", 0.5, 1.0, 1.5, 5, 0.05],
+  ["Turba pesada / arena fina de playa", 1.0, 1.5, 1.6, 20, 0],
+  ["Arcilla saturada (depósitos de arcilla espesa)", 2.0, 3.0, 1.7, 10, 0.15],
+  ["Arcilla húmeda / limo arcilloso (típico del Chaco)", 4.0, 5.0, 1.8, 20, 0.2],
+  ["Arcilla seca / limo compacto", 6.0, 8.0, 1.9, 25, 0.3],
+  ["Arcilla seca muy dura", 10.0, 10.0, 2.0, 28, 0.5],
+  ["Arena fina a media húmeda", 8.0, 10.0, 1.8, 30, 0],
+  ["Grava arenosa compacta", 10.0, 20.0, 2.0, 35, 0],
   ["Personalizado (estudio de suelos)", null, null]
 ];
 // Tabla de Sulzberger: coeficiente s en función de Ms/Mb
@@ -378,7 +389,8 @@ function disposicionTipica(){
 function leer(){
   const I = {};
   ["L","R","Dc","Db","Pp","e","sep","kPl","kPe","CSn","CSe","ang","fcorte","vanoV","vanoP","V","hielo","Gc","Gt","Cfc","Cfp",
-   "C","cbF","sig","tga","gH","tFondo","aM","bM","tM"].forEach(k => I[k] = num(k));
+   "C","cbF","sig","tga","gH","tFondo","aM","bM","tM","kSig","gS","phi","coh","mu","FSp","tau","FSd","FSl","zw"].forEach(k => I[k] = num(k));
+  I.napa = $("napa").checked;
   I.modo = radio("modo"); I.tipo = radio("tipo"); I.fmodo = radio("fmodo");
   I.tension = $("tension").value; I.estr = $("estr").value; I.expo = $("expo").value; I.orient = $("orient").value;
   I.posteSel = $("posteSel").value; I.suelo = SUELOS[+$("sueloSel").value][0];
@@ -396,13 +408,37 @@ function leer(){
 const ESTR_TXT = {susp:"Suspensión (alineación)", suspAng:"Suspensión angular", ret:"Retención (alineación)", retAng:"Retención angular / desvío", term:"Terminal"};
 function Kz(z, expo){ const p = expo==="B" ? {a:7, zg:366} : {a:9.5, zg:274}; return 2.01*Math.pow(Math.max(z,4.6)/p.zg, 2/p.a); }
 
-function sulz(ap, bp, t, G, Ct, Cb, tga, Mv){
-  const Ms = bp*Math.pow(t,3)/36*Ct*tga;
-  const term = G/(bp*ap*ap*Cb*tga);
-  let Mb = G*ap*(0.5 - 0.47*Math.sqrt(term)); if (Mb < 0) Mb = 0;
+// Sulzberger en una dirección. ap = lado paralelo a la fuerza, bp = lado perpendicular.
+// X = {Cd (C a 2 m, daN/m³), sig, kSig (kg/cm²), passive(z) (daN/m²), FSp}
+function sulz(ap, bp, t, G, Ct, Cb, tga, Mv, X){
+  const msAt = th => bp*Math.pow(t,3)/36*Ct*th;
+  // Fondo: contacto total (distribución trapecial) o despegue parcial (triangular, ancho c)
+  const mbAt = th => {
+    if (G <= 0) return {Mb:0, reg:"sin carga", c:0, sMax:0, thLim:0};
+    const thLim = 2*G/(bp*ap*ap*Cb);
+    if (th <= thLim) return {Mb: bp*Math.pow(ap,3)*Cb*th/12, reg:"total", c:ap, sMax: G/(ap*bp) + Cb*th*ap/2, thLim};
+    const c = Math.sqrt(2*G/(bp*Cb*th));
+    return {Mb: G*(ap/2 - c/3), reg:"parcial", c, sMax: 2*G/(bp*c), thLim};
+  };
+  const Ms = msAt(tga), B = mbAt(tga), Mb = B.Mb;
   const ratio = Mb > 0 ? Ms/Mb : Infinity;
   const s = sFactor(ratio), Mr = Ms + Mb, req = s*Mv;
-  return {ap, bp, Ms, Mb, term, ratio, s, Mr, Mv, req, ok: Mr >= req - 1e-9, util: Mr>0 ? req/Mr : Infinity, FS: Mv>0 ? Mr/Mv : Infinity};
+  // Giro real: Ms(θ) + Mb(θ) = Mv
+  const MrAt = th => msAt(th) + mbAt(th).Mb;
+  let thr;
+  if (Mv <= 0) thr = 0;
+  else if (MrAt(0.2) < Mv) thr = Infinity;
+  else { let lo = 0, hi = 0.2; for (let i = 0; i < 60; i++){ const m = (lo+hi)/2; if (MrAt(m) < Mv) lo = m; else hi = m; } thr = hi; }
+  const Br = isFinite(thr) ? mbAt(thr) : null;
+  const sigB = Br ? Br.sMax/KGF/1e4 : Infinity;                       // kg/cm²
+  const pSup = isFinite(thr) ? X.Cd*thr*t*t/18 : Infinity;             // daN/m², a z = t/3
+  const pInf = isFinite(thr) ? X.Cd*thr*t*t/6 : Infinity;              // daN/m², a z = t
+  const pasSup = X.passive(t/3), pasInf = X.passive(t);
+  const uLat = Math.max(pSup/(pasSup/X.FSp), pInf/(pasInf/X.FSp));
+  return {ap, bp, Ms, Mb, reg:B.reg, thLim:B.thLim, cB:B.c, ratio, s, Mr, Mv, req,
+    ok: Mr >= req - 1e-9, util: Mr>0 ? req/Mr : Infinity, FS: Mv>0 ? Mr/Mv : Infinity,
+    thr, regR: Br ? Br.reg : "—", cR: Br ? Br.c : 0, sigB, uB: sigB/(X.kSig*X.sig),
+    pSup, pInf, pasSup, pasInf, uLat, uG: thr/tga};
 }
 
 function calcular(I){
@@ -521,10 +557,25 @@ function calcular(I){
   // --- Fundación
   const Cd = I.C*KGF*1e6; // daN/m³
   R.Cd = Cd;
+  // Suelo: empuje pasivo de Rankine con cohesión, tensión efectiva bajo napa
+  const Kp = Math.pow(Math.tan((45 + I.phi/2)*Math.PI/180), 2);
+  const zw = I.napa ? Math.max(0, I.zw) : Infinity;
+  const sv = z => (I.gS*Math.min(z, zw) + Math.max(0, I.gS - 1)*Math.max(0, z - zw))*1000*KGF;   // daN/m²
+  const passive = z => sv(z)*Kp + 2*I.coh*1e4*KGF*Math.sqrt(Kp);
+  const tauD = I.tau*1e4*KGF;                                                                   // daN/m²
+  const Aadh = Math.PI*Dmemp*I.e, Ra = tauD*Aadh;                                                // arrancamiento por poste
+  Object.assign(R, {Kp, zw, passive, Aadh, Ra});
+  const X = {Cd, sig:I.sig, kSig:I.kSig, passive, FSp: I.FSp > 0 ? I.FSp : 1};
   const verificar = (a, b, t) => {
-    const Vexc = a*b*t, Vpos = n*Math.PI*Dmemp*Dmemp/4*I.e, Vh = Vexc - Vpos, Ph = Vh*I.gH*KGF;
+    const Vexc = a*b*t, Vpos = n*Math.PI*Dmemp*Dmemp/4*I.e, Vh = Vexc - Vpos;
+    // Hormigón bajo napa con peso sumergido (γH − 1000 kg/m³)
+    const Vsum = isFinite(zw) ? Math.max(0, a*b*Math.max(0, t - zw) - n*Math.PI*Dmemp*Dmemp/4*Math.max(0, I.e - zw)) : 0;
+    const Ph = (Vh*I.gH - Vsum*1000)*KGF;
     const Ct = Cd*t/2, Cb = I.cbF*Ct;
-    let ok = true, utilMax = 0, sigMax = 0;
+    const U = {sulz:0, giro:0, sig:0, borde:0, lat:0, bi:0, desl:0, lev:0, arr:0};
+    const W = {}; // hipótesis que manda cada verificación
+    const up = (k, v, hn) => { if (v > U[k] || W[k] === undefined){ if (v >= U[k]){ U[k] = v; W[k] = hn; } } };
+    let hayBi = false, hayLev = false, hayArr = false;
     const res = hyps.map(h => {
       const G = h.Gv + Ph;
       // Mv = M en el terreno + V · 2/3·t  (equivale a Σ F·(h + 2/3·t))
@@ -532,19 +583,49 @@ function calcular(I){
       const Mvy = h.My + h.Fy*2*t/3;
       const dirs = [];
       if (!doble){
-        dirs.push({lab:"Resultante", ...sulz(a, a, t, G, Ct, Cb, I.tga, Math.hypot(Mvx, Mvy))});
+        dirs.push({lab:"Resultante", ...sulz(a, a, t, G, Ct, Cb, I.tga, Math.hypot(Mvx, Mvy), X)});
       } else {
         const pl = I.orient;
-        if (Math.abs(Mvy) > 1e-6 || Math.abs(Mvx) < 1e-6) dirs.push({lab:"Transversal (y)", ...sulz(pl==="y"?a:b, pl==="y"?b:a, t, G, Ct, Cb, I.tga, Math.abs(Mvy))});
-        if (Math.abs(Mvx) > 1e-6) dirs.push({lab:"Longitudinal (x)", ...sulz(pl==="x"?a:b, pl==="x"?b:a, t, G, Ct, Cb, I.tga, Math.abs(Mvx))});
+        if (Math.abs(Mvy) > 1e-6 || Math.abs(Mvx) < 1e-6) dirs.push({lab:"Transversal (y)", ...sulz(pl==="y"?a:b, pl==="y"?b:a, t, G, Ct, Cb, I.tga, Math.abs(Mvy), X)});
+        if (Math.abs(Mvx) > 1e-6) dirs.push({lab:"Longitudinal (x)", ...sulz(pl==="x"?a:b, pl==="x"?b:a, t, G, Ct, Cb, I.tga, Math.abs(Mvx), X)});
       }
       const sig = G/(a*b)/KGF/1e4; // kg/cm²
-      dirs.forEach(d => { if (!d.ok) ok = false; utilMax = Math.max(utilMax, d.util); });
-      sigMax = Math.max(sigMax, sig);
-      return {G, Mvx, Mvy, dirs, sig};
+      dirs.forEach(d => { up("sulz", d.util, h.nombre); up("giro", d.uG, h.nombre); up("borde", d.uB, h.nombre); up("lat", d.uLat, h.nombre); });
+      up("sig", sig/I.sig, h.nombre);
+      // Flexión biaxial (poste doble, bloque rectangular): interacción lineal
+      let uBi = null;
+      if (dirs.length === 2){ hayBi = true; uBi = dirs[0].util + dirs[1].util; up("bi", uBi, h.nombre); }
+      // Deslizamiento: H·FS ≤ μ·G (sin contar el empuje lateral, del lado seguro)
+      const H = Math.hypot(h.Fx, h.Fy), Rd = I.mu*Math.max(G, 0);
+      const uD = H > 0 ? (Rd > 0 ? H*I.FSd/Rd : Infinity) : 0; up("desl", uD, h.nombre);
+      // Levantamiento del bloque: si las cargas verticales netas son de tracción
+      const Up = Math.max(0, -h.Gv), uLev = Up > 0 ? (Ph > 0 ? I.FSl*Up/Ph : Infinity) : 0;
+      if (Up > 0){ hayLev = true; up("lev", uLev, h.nombre); }
+      // Arrancamiento del poste traccionado (reacciones por poste)
+      const arr = [];
+      if (h.react) h.P.forEach((p, i) => {
+        const T = -p.N - (I.nIncl ? 0 : I.Pp*KGF);
+        if (p.N < 0){ hayArr = true; const u = T > 0 ? T/Ra : 0; arr.push({i:i+1, N:p.N, T, u}); up("arr", u, h.nombre); }
+      });
+      return {G, Mvx, Mvy, dirs, sig, uBi, H, Rd, uD, Up, uLev, arr};
     });
-    const okSig = sigMax <= I.sig + 1e-9;
-    return {a, b, t, Vexc, Vpos, Vh, Ph, Ct, Cb, res, ok: ok && okSig, okSulz: ok, okSig, utilMax, sigMax};
+    const lim = 1 + 1e-9;
+    const checks = [
+      {k:"sulz",  t:"Estabilidad al vuelco (Sulzberger): s·Mv ≤ Ms + Mb"},
+      {k:"giro",  t:"Giro real ≤ tg α admisible"},
+      {k:"sig",   t:"Presión media en el fondo ≤ σadm"},
+      {k:"borde", t:"Presión máxima en el borde del fondo ≤ k·σadm"},
+      {k:"lat",   t:"Presión lateral ≤ empuje pasivo / FS"},
+      ...(hayBi  ? [{k:"bi",  t:"Flexión biaxial (bloque rectangular)"}] : []),
+      {k:"desl",  t:"Deslizamiento: H·FS ≤ μ·G"},
+      ...(hayLev ? [{k:"lev", t:"Levantamiento del bloque"}] : []),
+      ...(hayArr ? [{k:"arr", t:"Arrancamiento del poste traccionado"}] : [])
+    ].map(c => ({...c, u:U[c.k], hip:W[c.k], ok: U[c.k] <= lim}));
+    // El arrancamiento depende del poste, no del bloque: no entra en la búsqueda automática
+    const okBloque = checks.filter(c => c.k !== "arr").every(c => c.ok);
+    const okSulz = U.sulz <= lim, okSig = U.sig <= lim;
+    return {a, b, t, Vexc, Vpos, Vh, Vsum, Ph, Ct, Cb, res, checks, ok: okBloque, okAll: checks.every(c => c.ok),
+      okSulz, okSig, utilMax: U.sulz, sigMax: Math.max(...res.map(r => r.sig))};
   };
   let F;
   const aMin = doble ? ceil5(Math.max(I.sep + I.Db + 0.30, 0.6)) : ceil5(Math.max(I.Db + 0.30, 0.6));
@@ -569,7 +650,7 @@ function calcular(I){
     F = verificar(a, b, I.tM);
   }
   R.F = F;
-  R.ok = F && F.ok && hyps.every(h => h.okP);
+  R.ok = F && F.okAll && hyps.every(h => h.okP);
   return R;
 }
 
@@ -757,7 +838,8 @@ Feq = Σ(F·h) / hr = M en el terreno / hr</div>`;
    <tr><th>Profundidad t</th><td class="n">${n(F.t)} m</td><th>Volumen de excavación a·b·t</th><td class="n">${n(F.Vexc,3)} m³</td></tr>
    <tr><th>Volumen ocupado por el poste</th><td class="n">${n(F.Vpos,3)} m³</td><th>Volumen de hormigón</th><td class="n">${n(F.Vh,3)} m³</td></tr></table>
    <div class="eq">Vhormigón = a·b·t − n·π·Ømed²/4·e = ${n(F.a)}·${n(F.b)}·${n(F.t)} − ${R.n}·π·${n(R.Dmemp,3)}²/4·${n(I.e)} = ${n(F.Vh,3)} m³
-Phormigón = Vh · γ = ${n(F.Vh,3)} · ${n(I.gH,0)} · 0,981 = ${n(F.Ph,0)} daN</div>
+${isFinite(R.zw) ? `Napa freática a ${n(R.zw)} m: volumen de hormigón sumergido Vsum = ${n(F.Vsum,3)} m³ (peso sumergido γH − 1000 kg/m³)
+Phormigón = (Vh · γH − Vsum · 1000) · 0,981 = (${n(F.Vh,3)} · ${n(I.gH,0)} − ${n(F.Vsum,3)} · 1000) · 0,981 = ${n(F.Ph,0)} daN` : `Phormigón = Vh · γH = ${n(F.Vh,3)} · ${n(I.gH,0)} · 0,981 = ${n(F.Ph,0)} daN   (sin napa freática)`}</div>
    <h3>8.2 Coeficientes del terreno</h3>
    <p>El coeficiente de compresibilidad crece linealmente con la profundidad. A partir del valor C a 2 m:</p>
    <div class="eq">Ct = C · t / 2 = ${sci(R.Cd)} · ${n(F.t)} / 2 = ${sci(F.Ct)} daN/m³   (paredes laterales, a la profundidad t)
@@ -767,11 +849,23 @@ Cb = ${n(I.cbF)} · Ct = ${sci(F.Cb)} daN/m³   (fondo)</div>
    Mv = Σ F · (h + 2/3·t) = M(terreno) + V · 2/3·t
 Momento de encastramiento lateral (reacción de las paredes):
    Ms = b · t³ / 36 · Ct · tg α
-Momento de fondo (reacción de la base por el peso total G):
-   Mb = G · a · [0,5 − 0,47 · √( G / (b · a² · Cb · tg α) )]
-   (a = lado paralelo a la fuerza, b = lado perpendicular)
+Momento de fondo (reacción de la base por el peso total G), a = lado paralelo a la fuerza, b = perpendicular.
+Límite entre los dos casos:  tg α,lím = 2·G / (b · a² · Cb)
+   a) tg α ≤ tg α,lím → todo el fondo en contacto (presión trapecial):
+      Mb = b · a³ · Cb · tg α / 12         σmáx = G/(a·b) + Cb · tg α · a/2
+   b) tg α > tg α,lím → el fondo se despega en parte (presión triangular de ancho c):
+      c = √( 2·G / (b · Cb · tg α) )
+      Mb = G · (a/2 − c/3) = G · a · [0,5 − 0,471 · √( G / (b · a² · Cb · tg α) )]
+      σmáx = 2·G / (b · c)
 Condición de estabilidad:
-   Ms + Mb ≥ s · Mv     con s = f(Ms/Mb) según la tabla de Sulzberger (1,5 → 1,0)</div>
+   Ms + Mb ≥ s · Mv     con s = f(Ms/Mb) según la tabla de Sulzberger (1,5 → 1,0)
+Giro real θ: valor de tg α para el que Ms(θ) + Mb(θ) = Mv  →  debe ser θ ≤ tg α admisible
+Con el giro real se calculan:
+   Presión máxima en el borde del fondo:  σmáx(θ) ≤ k · σadm   (k = ${n(I.kSig)})
+   Presión lateral, con C(z) = C · z / 2 y giro alrededor de z0 = 2/3·t:
+      por encima de O, máxima a z = t/3:  p = C · θ · t² / 18
+      por debajo de O, máxima a z = t:    p = C · θ · t² / 6
+      ambas ≤ empuje pasivo / FS:  σp(z) = σ'v(z) · Kp + 2 · c · √Kp,   Kp = tg²(45° + φ/2) = ${n(R.Kp,3)}</div>
    <table><tr><th class="n">Ms/Mb</th>${STAB.map(r=>`<td class="n">${n(r[0],1)}</td>`).join("")}</tr><tr><th class="n">s</th>${STAB.map(r=>`<td class="n">${n(r[1],3)}</td>`).join("")}</tr></table>`;
   R.hyps.forEach((H,i) => {
     const r = F.res[i];
@@ -783,32 +877,73 @@ Mv = √(Mv,x² + Mv,y²) = ${n(Math.hypot(r.Mvx,r.Mvy),0)} daN·m   (bloque cua
     r.dirs.forEach(D => {
       h += `${d?`<p><b>Dirección ${D.lab}</b>: a = ${n(D.ap)} m (paralelo a la fuerza), b = ${n(D.bp)} m</p>`:""}
       <div class="eq">Ms = ${n(D.bp)} · ${n(F.t)}³ / 36 · ${sci(F.Ct)} · ${n(I.tga,3)} = ${n(D.Ms,0)} daN·m
-Mb = ${n(r.G,0)} · ${n(D.ap)} · [0,5 − 0,47·√(${n(r.G,0)} / (${n(D.bp)}·${n(D.ap)}²·${sci(F.Cb)}·${n(I.tga,3)}))]
-   = ${n(r.G,0)} · ${n(D.ap)} · [0,5 − 0,47·${n(Math.sqrt(D.term),4)}] = ${n(D.Mb,0)} daN·m${D.Mb<=0?"   (se toma Mb = 0)":""}
+tg α,lím = 2 · ${n(r.G,0)} / (${n(D.bp)} · ${n(D.ap)}² · ${sci(F.Cb)}) = ${n(D.thLim,5)}   →   ${r.G<=0 ? "G ≤ 0: sin reacción de fondo (Mb = 0)" : D.reg==="total" ? `tg α = ${n(I.tga,3)} ≤ tg α,lím: fondo en contacto total` : `tg α = ${n(I.tga,3)} > tg α,lím: fondo despegado en parte`}
+${r.G<=0 ? "Mb = 0" : D.reg==="total"
+  ? `Mb = ${n(D.bp)} · ${n(D.ap)}³ · ${sci(F.Cb)} · ${n(I.tga,3)} / 12 = ${n(D.Mb,0)} daN·m`
+  : `c = √(2 · ${n(r.G,0)} / (${n(D.bp)} · ${sci(F.Cb)} · ${n(I.tga,3)})) = ${n(D.cB,3)} m
+Mb = ${n(r.G,0)} · (${n(D.ap)}/2 − ${n(D.cB,3)}/3) = ${n(D.Mb,0)} daN·m`}
 Ms/Mb = ${isFinite(D.ratio)?n(D.ratio,3):"∞"}  →  s = ${n(D.s,3)}
 Ms + Mb = ${n(D.Mr,0)} daN·m   ${D.ok?"≥":"<"}   s·Mv = ${n(D.s,3)} · ${n(D.Mv,0)} = ${n(D.req,0)} daN·m   →   ${D.ok?"VERIFICA":"NO VERIFICA"}
-Coeficiente de seguridad al vuelco (Ms+Mb)/Mv = ${n(D.FS,2)}</div>`;
+Coeficiente de seguridad al vuelco (Ms+Mb)/Mv = ${n(D.FS,2)}</div>
+      <div class="eq">Giro real:  Ms(θ) + Mb(θ) = Mv = ${n(D.Mv,0)} daN·m   →   θ = ${isFinite(D.thr)?n(D.thr,5):"∞ (el bloque no equilibra el vuelco)"}   ${D.uG<=1+1e-9?"≤":">"} ${n(I.tga,3)}   →   ${D.uG<=1+1e-9?"VERIFICA":"NO VERIFICA"}
+Presión en el borde con θ (fondo ${D.regR==="total"?"en contacto total":"despegado en parte, c = "+n(D.cR,3)+" m"}):
+   σmáx = ${n(D.sigB,3)} kg/cm²   ${D.uB<=1+1e-9?"≤":">"}   ${n(I.kSig)} · ${n(I.sig)} = ${n(I.kSig*I.sig,3)} kg/cm²   →   ${D.uB<=1+1e-9?"VERIFICA":"NO VERIFICA"}
+Presión lateral con θ:
+   z = t/3 = ${n(F.t/3)} m:  p = ${sci(R.Cd)} · ${n(D.thr,5)} · ${n(F.t)}² / 18 = ${n(D.pSup/KGF/1e4,3)} kg/cm²   vs   σp/FS = ${n(D.pasSup/KGF/1e4,3)} / ${n(I.FSp)} = ${n(D.pasSup/I.FSp/KGF/1e4,3)} kg/cm²
+   z = t = ${n(F.t)} m:      p = ${sci(R.Cd)} · ${n(D.thr,5)} · ${n(F.t)}² / 6 = ${n(D.pInf/KGF/1e4,3)} kg/cm²   vs   σp/FS = ${n(D.pasInf/KGF/1e4,3)} / ${n(I.FSp)} = ${n(D.pasInf/I.FSp/KGF/1e4,3)} kg/cm²
+   aprovechamiento = ${n(D.uLat*100,0)} %   →   ${D.uLat<=1+1e-9?"VERIFICA":"NO VERIFICA"}</div>`;
     });
+    if (r.uBi !== null) h += `<div class="eq">Flexión biaxial (bloque rectangular, interacción lineal):
+   s·Mv,y/(Ms+Mb)y + s·Mv,x/(Ms+Mb)x = ${n(r.dirs[0].util,3)} + ${n(r.dirs[1].util,3)} = ${n(r.uBi,3)}   ${r.uBi<=1+1e-9?"≤":">"} 1   →   ${r.uBi<=1+1e-9?"VERIFICA":"NO VERIFICA"}</div>`;
   });
 
   // 9 presión
   h += `<h2>9. Presión sobre el terreno</h2><div class="eq">σ = G / (a·b)  ≤  σadm = ${n(I.sig)} kg/cm²</div>
    <table><tr><th>Hipótesis</th><th class="n">G (daN)</th><th class="n">σ (kg/cm²)</th><th>Resultado</th></tr>
    ${R.hyps.map((H,i)=>`<tr><td>${esc(H.nombre)}</td><td class="n">${n(F.res[i].G,0)}</td><td class="n">${n(F.res[i].sig,3)}</td><td>${okTxt(F.res[i].sig<=I.sig+1e-9)}</td></tr>`).join("")}</table>
-   <p class="note">Presión media. En el método de Sulzberger la excentricidad de la reacción del fondo ya está contemplada en Mb con el giro limitado a tg α.</p>`;
+   <p class="note">Presión media. La presión máxima en el borde del fondo y la presión lateral, calculadas con el giro real, se verificaron en el punto 8 para cada hipótesis.</p>
+   <h3>Parámetros del suelo para el empuje pasivo</h3>
+   <div class="eq">γs = ${n(I.gS,2)} t/m³   φ = ${n(I.phi,1)}°   c = ${n(I.coh,2)} kg/cm²   Kp = tg²(45° + φ/2) = ${n(R.Kp,3)}${isFinite(R.zw) ? `
+Bajo la napa (z > ${n(R.zw)} m) se usa γ' = γs − 1 = ${n(I.gS-1,2)} t/m³` : ""}
+σp(z) = σ'v(z) · Kp + 2 · c · √Kp      FS empuje pasivo = ${n(I.FSp)}</div>`;
 
-  // 10 conclusiones
+  // 10 estabilidad complementaria
+  h += `<h2>10. Verificaciones complementarias de estabilidad</h2>
+   <h3>10.1 Deslizamiento</h3>
+   <p>Se resiste solo con el rozamiento en el fondo. El empuje lateral del suelo no se cuenta, lo que queda del lado seguro.</p>
+   <div class="eq">H · FS ≤ μ · G      μ = ${n(I.mu,2)}   FS = ${n(I.FSd)}</div>
+   <table><tr><th>Hipótesis</th><th class="n">H (daN)</th><th class="n">G (daN)</th><th class="n">μ·G (daN)</th><th class="n">FS real</th><th>Resultado</th></tr>
+   ${R.hyps.map((H,i)=>{ const r=F.res[i]; return `<tr><td>${esc(H.nombre)}</td><td class="n">${n(r.H,0)}</td><td class="n">${n(r.G,0)}</td><td class="n">${n(r.Rd,0)}</td><td class="n">${r.H>0?n(r.Rd/r.H,2):"—"}</td><td>${okTxt(r.uD<=1+1e-9)}</td></tr>`; }).join("")}</table>
+   <h3>10.2 Levantamiento del bloque</h3>`;
+  if (F.res.some(r => r.Up > 0)){
+    h += `<p>Las cargas verticales netas de ${d?"los postes":"la estructura"} resultan de tracción en alguna hipótesis. Las resiste el peso del bloque (no se cuenta el cono de suelo, lo que queda del lado seguro):</p>
+     <div class="eq">Phormigón ≥ FS · U      FS = ${n(I.FSl)}</div>
+     <table><tr><th>Hipótesis</th><th class="n">U (daN)</th><th class="n">Phormigón (daN)</th><th class="n">FS real</th><th>Resultado</th></tr>
+     ${R.hyps.map((H,i)=>{ const r=F.res[i]; return r.Up>0 ? `<tr><td>${esc(H.nombre)}</td><td class="n">${n(r.Up,0)}</td><td class="n">${n(F.Ph,0)}</td><td class="n">${n(F.Ph/r.Up,2)}</td><td>${okTxt(r.uLev<=1+1e-9)}</td></tr>` : ""; }).join("")}</table>`;
+  } else h += `<p>No corresponde: en todas las hipótesis la carga vertical neta es de compresión.</p>`;
+  h += `<h3>10.3 Arrancamiento del poste traccionado</h3>`;
+  const arrs = F.res.flatMap((r,i) => r.arr.map(x => ({...x, hn:R.hyps[i].nombre})));
+  if (arrs.length){
+    h += `<p>El poste traccionado debe quedar retenido en el hormigón por adherencia en el empotramiento:</p>
+     <div class="eq">Ra = τadm · π · Ømed · e = ${n(I.tau,2)} kg/cm² · π · ${n(R.Dmemp,3)} · ${n(I.e)} = ${n(I.tau,2)} · 0,981·10⁴ · ${n(R.Aadh,3)} m² = ${n(R.Ra,0)} daN
+T = −N${I.nIncl?"":" − peso del poste"} ≤ Ra</div>
+     <table><tr><th>Hipótesis</th><th>Poste</th><th class="n">N (daN)</th><th class="n">T (daN)</th><th class="n">Ra (daN)</th><th>Resultado</th></tr>
+     ${arrs.map(x => `<tr><td>${esc(x.hn)}</td><td>${x.i}</td><td class="n">${n(x.N,0)}</td><td class="n">${n(Math.max(x.T,0),0)}</td><td class="n">${n(R.Ra,0)}</td><td>${okTxt(x.u<=1+1e-9)}</td></tr>`).join("")}</table>`;
+  } else h += `<p>No corresponde: ningún poste queda traccionado${I.modo==="reac"?"":" (esta verificación se hace con las reacciones por poste, en el modo «Reacciones en la base»)"}.</p>`;
+
+  // 11 conclusiones
   const pOk = R.hyps.every(H=>H.okP);
-  h += `<h2>10. Resultados y conclusiones</h2><table>
-   <tr><th>Poste</th><td>${d?"Doble ":""}HºAº ${n(I.L)}/${n(I.R,0)} – aprovechamiento máx. ${n(Math.max(...R.hyps.map(H=>H.utilP))*100,0)} %</td><td>${okTxt(pOk)}</td></tr>
-   <tr><th>Fundación (a × b × t)</th><td><b>${n(F.a)} × ${n(F.b)} × ${n(F.t)} m</b> – hormigón ${n(F.Vh,2)} m³ (excavación ${n(F.Vexc,2)} m³)</td><td>${okTxt(F.okSulz)}</td></tr>
-   <tr><th>Presión en la base</th><td>σ máx = ${n(F.sigMax,3)} kg/cm² ≤ ${n(I.sig)} kg/cm²</td><td>${okTxt(F.okSig)}</td></tr></table>
+  h += `<h2>11. Resultados y conclusiones</h2>
+   <p>Fundación adoptada: <b>${n(F.a)} × ${n(F.b)} × ${n(F.t)} m</b> – hormigón ${n(F.Vh,2)} m³ (excavación ${n(F.Vexc,2)} m³).</p>
+   <table><tr><th>Verificación</th><th class="n">Aprovechamiento máx.</th><th>Hipótesis que manda</th><th>Resultado</th></tr>
+   <tr><td>Poste ${d?"doble ":""}HºAº ${n(I.L)}/${n(I.R,0)}</td><td class="n">${n(Math.max(...R.hyps.map(H=>H.utilP))*100,0)} %</td><td>${esc(R.hyps.reduce((m,H)=>H.utilP>m.utilP?H:m).nombre)}</td><td>${okTxt(pOk)}</td></tr>
+   ${F.checks.map(c => `<tr><td>${c.t}</td><td class="n">${isFinite(c.u)?n(c.u*100,0)+" %":"∞"}</td><td>${esc(c.hip||"—")}</td><td>${okTxt(c.ok)}</td></tr>`).join("")}</table>
    <p>${R.ok?"La estructura y su fundación <b>verifican</b> para todas las hipótesis analizadas.":"<b>La estructura no verifica</b> en al menos una condición. Revisar el poste, las dimensiones de la fundación o los datos de entrada."}</p>`;
   if (R.warn.length) h += `<p class="bad">Advertencias:</p><ul>${R.warn.map(w=>`<li>${esc(w)}</li>`).join("")}</ul>`;
-  h += `<h2>11. Observaciones</h2><ul class="note">
+  h += `<h2>12. Observaciones</h2><ul class="note">
    <li>Se verificaron las hipótesis principales (viento máximo y corte de conductor). Cuando la especificación del proyecto lo pida, se deben analizar además el viento oblicuo y las hipótesis de montaje.</li>
-   <li>Valores de referencia que deben confirmarse: velocidad básica de viento de la zona (Chaco), factores de ráfaga G, coeficiente C del suelo (preferentemente con estudio geotécnico) y datos del poste del fabricante.</li>
-   <li>Hormigón de la fundación: H-13 o superior. El poste se aploma y se fija con cuñas antes del llenado. Con napa freática alta, conviene considerar el peso sumergido del hormigón.</li></ul>`;
+   <li>Valores de referencia que deben confirmarse: velocidad básica de viento de la zona (Chaco), factores de ráfaga G, parámetros del suelo C, γs, φ, c y σadm (preferentemente con estudio geotécnico), adherencia poste–hormigón y datos del poste del fabricante.</li>
+   <li>Hormigón de la fundación: H-13 o superior. El poste se aploma y se fija con cuñas antes del llenado.</li></ul>`;
   if (word) h = h.replace("<h2>8.", `<p style="text-align:center"><img src="esquema.png" width="560" height="390"></p><h2>8.`);
   else h = h.replace("<h2>8.", `<div style="text-align:center;margin:8px 0">${sketchSVG(R)}</div><h2>8.`);
   return h;
@@ -826,8 +961,11 @@ function render(R){
     <div class="kpi"><div class="l">Hormigón / excavación</div><div class="v">${f(F.Vh)} / ${f(F.Vexc)} m³</div></div>
     <div class="kpi ${pU<=1?"ok":"bad"}"><div class="l">Aprovechamiento del poste</div><div class="v">${f(pU*100,0)} %</div></div>
     <div class="kpi ${F.okSulz?"ok":"bad"}"><div class="l">Sulzberger: s·Mv / (Ms+Mb)</div><div class="v">${f(F.utilMax*100,0)} %</div></div>
-    <div class="kpi ${F.okSig?"ok":"bad"}"><div class="l">σ máx / σadm (kg/cm²)</div><div class="v">${f(F.sigMax,2)} / ${f(R.I.sig,2)}</div></div>`;
-  let t = `<table class="rows" style="font-size:12.5px"><thead><tr><th>Hipótesis</th><th>Dirección</th><th>Mv (daN·m)</th><th>Ms</th><th>Mb</th><th>s</th><th>Ms+Mb ≥ s·Mv</th><th>FS vuelco</th></tr></thead><tbody>`;
+    <div class="kpi ${F.okSig?"ok":"bad"}"><div class="l">σ media / σadm (kg/cm²)</div><div class="v">${f(F.sigMax,2)} / ${f(R.I.sig,2)}</div></div>`;
+  let ck = `<table class="rows" style="font-size:12.5px;margin-bottom:12px"><thead><tr><th>Verificación</th><th>Aprovechamiento</th><th>Hipótesis</th><th>Estado</th></tr></thead><tbody>`;
+  F.checks.forEach(c => ck += `<tr><td>${c.t}</td><td>${isFinite(c.u)?f(c.u*100,0)+" %":"∞"}</td><td>${esc(c.hip||"—")}</td><td style="color:${c.ok?"var(--ok)":"var(--bad)"};font-weight:600">${c.ok?"Verifica":"No verifica"}</td></tr>`);
+  ck += `</tbody></table>`;
+  let t = ck + `<table class="rows" style="font-size:12.5px"><thead><tr><th>Hipótesis</th><th>Dirección</th><th>Mv (daN·m)</th><th>Ms</th><th>Mb</th><th>s</th><th>Ms+Mb ≥ s·Mv</th><th>FS vuelco</th></tr></thead><tbody>`;
   R.hyps.forEach((h,i) => F.res[i].dirs.forEach(D => t += `<tr><td>${esc(h.nombre)}</td><td>${D.lab}</td><td>${f(D.Mv,0)}</td><td>${f(D.Ms,0)}</td><td>${f(D.Mb,0)}</td><td>${f(D.s,3)}</td><td style="color:${D.ok?"var(--ok)":"var(--bad)"};font-weight:600">${f(D.Mr,0)} ${D.ok?"≥":"<"} ${f(D.req,0)}</td><td>${f(D.FS)}</td></tr>`));
   t += `</tbody></table>`;
   if (R.warn.length) t += `<div class="hint" style="color:var(--warn);background:var(--warn-soft);padding:6px 8px;border-radius:5px;margin-top:8px">${R.warn.map(esc).join("<br>")}</div>`;
@@ -942,6 +1080,9 @@ function init(){
     document.querySelectorAll("#listReac tr.p2").forEach(tr => tr.hidden = !d);
     $("lbA").firstChild.textContent = d ? "Lado a, en el plano de los postes (m)" : "Lado a = b (m)"; };
   const fundUI = () => { const m = radio("fmodo") === "manual"; ["aM","bM","tM"].forEach(k => $(k).disabled = !m); };
+  const muAuto = () => { $("mu").value = Math.round(Math.tan(2/3*num("phi")*Math.PI/180)*100)/100; };
+  const napaUI = () => { $("lbZw").hidden = !$("napa").checked; };
+  napaUI();
   modoUI(); tipoUI(); fundUI();
 
   $("frm").addEventListener("input", calc);
@@ -950,7 +1091,9 @@ function init(){
     if (id === "posteSel") aplicarPoste();
     if (id === "L" || id === "eAuto") aplicarE();
     if (["L","R","Dc","Db","Pp"].includes(id)) $("posteSel").value = "custom";
-    if (id === "sueloSel"){ const s = SUELOS[+e.target.value]; if (s[1] != null) $("C").value = s[1]; }
+    if (id === "sueloSel"){ const s = SUELOS[+e.target.value]; if (s[1] != null){ $("C").value = s[1]; $("gS").value = s[3]; $("phi").value = s[4]; $("coh").value = s[5]; muAuto(); } }
+    if (id === "phi") muAuto();
+    if (id === "napa") napaUI();
     if (id === "tension") disposicionTipica();
     if (id === "estr"){ $("orient").value = e.target.value === "term" ? "x" : "y"; if (!(e.target.value==="suspAng"||e.target.value==="retAng")) $("ang").value = 0; else if (num("ang")===0) $("ang").value = 15; }
     if (nm === "modo") modoUI();
