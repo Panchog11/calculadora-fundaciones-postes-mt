@@ -197,6 +197,12 @@ table.rows input,table.rows select{padding:3px 4px;font-size:12.5px}
 
 <details open id="boxReac" style="display:none"><summary>3 · Reacciones en la base (nivel del terreno)</summary><div class="body">
   <div style="display:flex;justify-content:flex-end"><button class="small" type="button" id="addReac">+ Hipótesis</button></div>
+  <div id="rformaBox" style="margin-top:6px"><label>Forma de carga (poste doble)</label>
+    <div class="seg">
+      <label><input type="radio" name="rforma" value="centro" checked> Resultante en el centro</label>
+      <label><input type="radio" name="rforma" value="poste"> Por poste</label>
+    </div>
+    <p class="hint" id="rformaHint"></p></div>
   <div id="listReac" style="display:flex;flex-direction:column;gap:10px;margin-top:6px"></div>
   <label class="chk" style="margin-top:8px"><input type="checkbox" id="nIncl" checked> Las reacciones N ya incluyen el peso de los postes</label>
   <p class="hint">Reacciones de cada poste a nivel del terreno, por ejemplo las que da un programa de cálculo estructural. N positiva = compresión, negativa = tracción. Vt y Mt corresponden a la dirección transversal (y); Vℓ y Mℓ, a la longitudinal (x). V y M llevan el mismo signo cuando la carga empuja hacia el mismo lado. En el poste doble, el poste 1 está en −s/2 y el poste 2 en +s/2 sobre el plano de los postes, y la diferencia de N entre ambos genera un par que se suma al momento en ese plano.</p>
@@ -366,7 +372,8 @@ const RK = ["N","Vt","Vl","Mt","Ml"];
 function reacRow(h){
   const div = document.createElement("div"); div.className = "reac";
   const dob = radio("tipo") === "doble";
-  const fila = (i, p) => `<tr class="p${i+1}"${i===1 && !dob ? " hidden" : ""}><td>Poste ${i+1}</td>${RK.map(k=>`<td><input class="r-${k}" type="number" step="any" value="${p[k]}"></td>`).join("")}</tr>`;
+  const cen = dob && radio("rforma") === "centro";
+  const fila = (i, p) => `<tr class="p${i+1}"${i===1 && (!dob || cen) ? " hidden" : ""}><td class="r-lab">${i===0 ? (cen ? "Centro" : dob ? "Poste 1" : "Poste") : "Poste 2"}</td>${RK.map(k=>`<td><input class="r-${k}" type="number" step="any" value="${p[k]}"></td>`).join("")}</tr>`;
   div.innerHTML = `<div class="reac-head"><input class="r-n" value="${esc(h.n)}" aria-label="Nombre de la hipótesis">
       <select class="r-t" aria-label="Tipo de hipótesis"><option value="N"${h.t==="N"?" selected":""}>Normal</option><option value="E"${h.t==="E"?" selected":""}>Excepcional</option></select>
       <button class="small" type="button" title="Quitar">✕</button></div>
@@ -374,6 +381,15 @@ function reacRow(h){
     <tbody>${fila(0, h.p[0])}${fila(1, h.p[1])}</tbody></table>`;
   div.querySelector("button").onclick = () => { div.remove(); calc(); };
   $("listReac").appendChild(div);
+}
+function reacUI(){
+  const d = radio("tipo") === "doble", cen = d && radio("rforma") === "centro";
+  $("rformaBox").hidden = !d;
+  document.querySelectorAll("#listReac tr.p2").forEach(tr => tr.hidden = !d || cen);
+  document.querySelectorAll("#listReac tr.p1 .r-lab").forEach(td => td.textContent = cen ? "Centro" : d ? "Poste 1" : "Poste");
+  $("rformaHint").textContent = cen
+    ? "Cargá N, V y M totales del conjunto en el centro de los dos postes, a nivel del terreno (datos de proyecto). El momento ya incluye el par de los axiles. Para verificar el arrancamiento, la N de cada poste se estima del lado seguro: Ni = N/2 ∓ |M en el plano|/s."
+    : "Cargá las reacciones de cada poste. El par de los axiles (N2 − N1)·s/2 se suma al momento en el plano de los postes.";
 }
 function disposicionTipica(){
   $("tbCond").innerHTML = ""; $("tbElem").innerHTML = "";
@@ -402,6 +418,7 @@ function leer(){
   I.tension = $("tension").value; I.estr = $("estr").value; I.expo = $("expo").value; I.orient = $("orient").value;
   I.posteSel = $("posteSel").value; I.suelo = SUELOS[+$("sueloSel").value][0];
   I.vPosteDir = $("vPosteDir").checked; I.nIncl = $("nIncl").checked;
+  I.rforma = radio("rforma");
   I.reac = [...document.querySelectorAll("#listReac .reac")].map(d => ({n:d.querySelector(".r-n").value, t:d.querySelector(".r-t").value,
     p:[...d.querySelectorAll("tbody tr")].map(tr => Object.fromEntries(RK.map(k => [k, pf(tr.querySelector(".r-"+k).value)])))}));
   I.obra = $("obra").value; I.ubic = $("ubic").value; I.piq = $("piq").value; I.autor = $("autor").value;
@@ -519,7 +536,21 @@ function calcular(I){
     // Reacciones a nivel del terreno. Mx = Mℓ (vuelco longitudinal), My = Mt (vuelco transversal)
     if (I.nIncl) vert.length = 0;
     const Gp = I.nIncl ? 0 : n*I.Pp*KGF;
-    I.reac.forEach(r => {
+    const centro = doble && I.rforma === "centro";
+    R.centro = centro;
+    if (centro && I.sep <= 0) R.warn.push("La separación entre ejes de los postes debe ser mayor que cero para estimar la N de cada poste.");
+    if (centro) I.reac.forEach(r => {
+      // Resultante del conjunto en el centro de los dos postes, a nivel del terreno: el par de axiles ya está en M
+      const c = r.p[0];
+      const Mpl = I.orient === "y" ? c.Mt : c.Ml;
+      // N por poste estimada del lado seguro: todo el momento en el plano lo toma el par de axiles
+      const dN = I.sep > 0 ? Math.abs(Mpl)/I.sep : 0;
+      const P = [{N: c.N/2 - dN}, {N: c.N/2 + dN}];
+      hyps.push({nombre:r.n, tipo:r.t, react:true, centro:true, C:c, P, Mpl, dN, Nsum:c.N, coup:0, forces:[],
+        desc:"Resultante del conjunto en el centro de los dos postes, a nivel del terreno (datos de proyecto). El momento ya incluye el par de los axiles",
+        Mx: c.Ml, My: c.Mt, Fx: c.Vl, Fy: c.Vt, Gv: c.N + Gp});
+    });
+    else I.reac.forEach(r => {
       const P = r.p.slice(0, n);
       const sum = k => P.reduce((s,p) => s + p[k], 0);
       const coup = doble ? (P[1].N - P[0].N)*I.sep/2 : 0;   // par por diferencia de axiles
@@ -800,6 +831,21 @@ zc = hl · (Øt + 2·Øc) / [3·(Øt + Øc)] = ${n(R.vPoste.zc)} m</div>`;
   // 6 hipótesis
   h += `<h2>6. Hipótesis de carga</h2><p>Ejes: x = longitudinal (dirección de la línea), y = transversal (perpendicular a la línea o sobre la bisectriz). Las alturas h se miden desde el nivel del terreno.</p>`;
   R.hyps.forEach(H => {
+    if (H.centro){
+      const pl = I.orient, C = H.C;
+      h += `<h3>${esc(H.nombre)} <span class="note">(${H.tipo==="E"?"excepcional":"normal"})</span></h3><p>${esc(H.desc)}.</p>
+       <table><tr><th>Punto</th><th class="n">N (daN)</th><th class="n">Vt (daN)</th><th class="n">Vℓ (daN)</th><th class="n">Mt (daN·m)</th><th class="n">Mℓ (daN·m)</th></tr>
+       <tr><td>Centro de los dos postes</td>${RK.map(k => `<td class="n">${n(C[k],0)}</td>`).join("")}</tr></table>
+       <div class="eq">Solicitaciones a nivel del terreno, en el centro del bloque:
+   Mℓ = ${n(H.Mx,0)} daN·m    Vℓ = ${n(H.Fx,1)} daN
+   Mt = ${n(H.My,0)} daN·m    Vt = ${n(H.Fy,1)} daN
+   N = ${n(H.Nsum,0)} daN
+Axil estimado en cada poste (para el arrancamiento). Del lado seguro, se supone que todo el momento
+en el plano de los postes (${pl==="y"?"Mt":"Mℓ"} = ${n(H.Mpl,0)} daN·m) lo toma el par de axiles:
+   Ni = N/2 ∓ |M,plano| / s = ${n(H.Nsum,0)}/2 ∓ ${n(Math.abs(H.Mpl),0)}/${n(I.sep)} = ${n(H.Nsum/2,0)} ∓ ${n(H.dN,0)}
+   N1 = ${n(H.P[0].N,0)} daN    N2 = ${n(H.P[1].N,0)} daN</div>`;
+      return;
+    }
     if (H.react){
       const pl = I.orient, S = k => H.P.reduce((s,p) => s + p[k], 0);
       h += `<h3>${esc(H.nombre)} <span class="note">(${H.tipo==="E"?"excepcional":"normal"})</span></h3><p>${esc(H.desc)}.</p>
@@ -931,7 +977,7 @@ Bajo la napa (z > ${n(R.zw)} m) se usa γ' = γs − 1 = ${n(I.gS-1,2)} t/m³` :
   h += `<h3>10.3 Arrancamiento del poste traccionado</h3>`;
   const arrs = F.res.flatMap((r,i) => r.arr.map(x => ({...x, hn:R.hyps[i].nombre})));
   if (arrs.length){
-    h += `<p>El poste traccionado debe quedar retenido en el hormigón por adherencia en el empotramiento:</p>
+    h += `<p>El poste traccionado debe quedar retenido en el hormigón por adherencia en el empotramiento${R.centro ? ". La N de cada poste es la estimada en el punto 6 a partir de la resultante en el centro" : ""}:</p>
      <div class="eq">Ra = τadm · π · Ømed · e = ${n(I.tau,2)} kg/cm² · π · ${n(R.Dmemp,3)} · ${n(I.e)} = ${n(I.tau,2)} · 0,981·10⁴ · ${n(R.Aadh,3)} m² = ${n(R.Ra,0)} daN
 T = −N${I.nIncl?"":" − peso del poste"} ≤ Ra</div>
      <table><tr><th>Hipótesis</th><th>Poste</th><th class="n">N (daN)</th><th class="n">T (daN)</th><th class="n">Ra (daN)</th><th>Resultado</th></tr>
@@ -1079,12 +1125,12 @@ function init(){
   hipRow({n:"H1 – Normal", t:"N", ft:600, fl:0, d:0.25, g:0});
   hipRow({n:"H2 – Excepcional", t:"E", ft:0, fl:450, d:0.25, g:0});
 
-  reacRow({n:"H1 – Viento máximo", t:"N", p:[{N:600, Vt:450, Vl:0, Mt:2500, Ml:0}, {N:3400, Vt:450, Vl:0, Mt:2500, Ml:0}]});
-  reacRow({n:"H2 – Corte de conductor", t:"E", p:[{N:1900, Vt:0, Vl:400, Mt:0, Ml:4300}, {N:1900, Vt:0, Vl:0, Mt:0, Ml:0}]});
+  reacRow({n:"H1 – Viento máximo", t:"N", p:[{N:4000, Vt:900, Vl:0, Mt:5840, Ml:0}, {N:3400, Vt:450, Vl:0, Mt:2500, Ml:0}]});
+  reacRow({n:"H2 – Corte de conductor", t:"E", p:[{N:3800, Vt:0, Vl:400, Mt:0, Ml:4300}, {N:1900, Vt:0, Vl:0, Mt:0, Ml:0}]});
 
   const modoUI = () => { const m = radio("modo"); $("boxLinea").style.display = m === "linea" ? "" : "none"; $("boxDirecto").style.display = m === "directo" ? "" : "none"; $("boxReac").style.display = m === "reac" ? "" : "none"; };
   const tipoUI = () => { const d = radio("tipo") === "doble"; $("dobleBox").style.display = d ? "" : "none"; $("lbB").style.display = d ? "" : "none";
-    document.querySelectorAll("#listReac tr.p2").forEach(tr => tr.hidden = !d);
+    reacUI();
     $("lbA").firstChild.textContent = d ? "Lado a, en el plano de los postes (m)" : "Lado a = b (m)"; };
   const fundUI = () => { const m = radio("fmodo") === "manual"; ["aM","bM","tM"].forEach(k => $(k).disabled = !m); };
   const muAuto = () => { $("mu").value = Math.round(Math.tan(2/3*num("phi")*Math.PI/180)*100)/100; };
@@ -1101,6 +1147,7 @@ function init(){
     if (id === "sueloSel"){ const s = SUELOS[+e.target.value]; if (s[1] != null){ $("C").value = s[1]; $("gS").value = s[3]; $("phi").value = s[4]; $("coh").value = s[5]; muAuto(); } }
     if (id === "phi") muAuto();
     if (id === "napa") napaUI();
+    if (nm === "rforma") reacUI();
     if (id === "tension") disposicionTipica();
     if (id === "estr"){ $("orient").value = e.target.value === "term" ? "x" : "y"; if (!(e.target.value==="suspAng"||e.target.value==="retAng")) $("ang").value = 0; else if (num("ang")===0) $("ang").value = 15; }
     if (nm === "modo") modoUI();
