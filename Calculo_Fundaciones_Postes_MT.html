@@ -1,0 +1,971 @@
+<title>Fundaciones Postes MT</title>
+<meta charset="utf-8">
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Herramienta de cálculo: datos a la izquierda, resultado y memoria a la derecha */
+:root{
+  --bg:#f3f5f8; --card:#ffffff; --field:#ffffff; --ink:#1b2430; --muted:#5a6575; --line:#d6dce4;
+  --brand:#14365f; --brand-ink:#ffffff; --head:#14365f;
+  --accent:#1f5fa8; --accent-soft:#e6eef9; --on-accent:#ffffff;
+  --ok:#1e7a46; --ok-soft:#e3f3e9; --ok-line:#b9dfc6;
+  --bad:#b3261e; --bad-soft:#fbe6e4; --bad-line:#f0c2bd;
+  --warn:#8a5a00; --warn-soft:#fff3d6;
+  --th:#eaf0f6; --eq:#f3f6fa; --cell:#c5cbd3;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#10151c; --card:#18202a; --field:#111820; --ink:#e3e8ef; --muted:#9aa6b6; --line:#2c3846;
+  --brand:#0f2a4a; --brand-ink:#ffffff; --head:#9cc2ee;
+  --accent:#5b9be0; --accent-soft:#1c3150; --on-accent:#0b1420;
+  --ok:#5cc98a; --ok-soft:#14291e; --ok-line:#24553a;
+  --bad:#f08a80; --bad-soft:#331816; --bad-line:#6b2b26;
+  --warn:#f0c060; --warn-soft:#2e2410;
+  --th:#1f2a37; --eq:#141c25; --cell:#344252; color-scheme:dark; } }
+:root[data-theme="dark"]{
+  --bg:#10151c; --card:#18202a; --field:#111820; --ink:#e3e8ef; --muted:#9aa6b6; --line:#2c3846;
+  --brand:#0f2a4a; --brand-ink:#ffffff; --head:#9cc2ee;
+  --accent:#5b9be0; --accent-soft:#1c3150; --on-accent:#0b1420;
+  --ok:#5cc98a; --ok-soft:#14291e; --ok-line:#24553a;
+  --bad:#f08a80; --bad-soft:#331816; --bad-line:#6b2b26;
+  --warn:#f0c060; --warn-soft:#2e2410;
+  --th:#1f2a37; --eq:#141c25; --cell:#344252; color-scheme:dark; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 "Segoe UI",Roboto,Arial,sans-serif}
+header{background:var(--brand);color:var(--brand-ink);padding-block:14px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+header h1{font-size:18px;margin:0;font-weight:600;text-wrap:balance}
+header p{margin:2px 0 0;font-size:12.5px;opacity:.85}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+button{font:inherit;cursor:pointer;border-radius:6px;border:1px solid var(--line);background:var(--field);color:var(--ink);padding:6px 12px}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+button.small{padding:2px 8px;font-size:12px}
+#wordMsg{font-size:12px;opacity:.9;align-self:center}
+.layout{display:grid;grid-template-columns:minmax(330px,430px) 1fr;gap:16px;padding-block:16px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));max-width:1500px;margin:0 auto}
+@media (max-width:900px){.layout{grid-template-columns:minmax(0,1fr);padding-block:12px}}
+.inputs{display:flex;flex-direction:column;gap:12px;min-width:0}
+details{background:var(--card);border:1px solid var(--line);border-radius:8px}
+summary{cursor:pointer;padding:10px 14px;font-weight:600;color:var(--head);list-style:none;display:flex;justify-content:space-between}
+summary::after{content:"▾";color:var(--muted)}
+details:not([open]) summary::after{content:"▸"}
+.body{padding:4px 14px 14px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px}
+.grid .full{grid-column:1/-1}
+label{display:flex;flex-direction:column;font-size:12.5px;color:var(--muted);gap:3px}
+input,select{font:inherit;color:var(--ink);padding:5px 7px;border:1px solid var(--line);border-radius:5px;background:var(--field);width:100%;min-width:0}
+.body{overflow-x:auto}
+input:focus,select:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}
+.seg{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg label{flex:1;flex-direction:row;align-items:center;justify-content:center;gap:6px;padding:6px;color:var(--ink);cursor:pointer;font-size:13px}
+.seg input{width:auto}
+.seg label:has(input:checked){background:var(--accent-soft);color:var(--accent);font-weight:600}
+.chk{flex-direction:row;align-items:center;gap:6px;color:var(--ink)}
+.reac{border:1px solid var(--line);border-radius:6px;padding:8px}
+.reac-head{display:grid;grid-template-columns:1fr 120px auto;gap:6px;align-items:center}
+.reac table.rows th,.reac table.rows td{text-align:center}
+.reac table.rows td:first-child{white-space:nowrap;font-size:12px;color:var(--muted)}
+.chk input{width:auto}
+.hint{font-size:11.5px;color:var(--muted);margin:6px 0 0}
+table.rows{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:6px}
+table.rows th{font-weight:600;color:var(--muted);text-align:left;padding:3px 3px;font-size:11.5px}
+table.rows td{padding:2px 3px}
+table.rows input,table.rows select{padding:3px 4px;font-size:12.5px}
+.outputs{display:flex;flex-direction:column;gap:16px;min-width:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 16px}
+.card h2{font-size:15px;margin:0 0 10px;color:var(--head)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpi{border:1px solid var(--line);border-radius:7px;padding:9px 11px}
+.kpi .l{font-size:11.5px;color:var(--muted)}
+.kpi .v{font-size:19px;font-weight:600;margin-top:2px;font-variant-numeric:tabular-nums}
+.kpi.ok{background:var(--ok-soft);border-color:var(--ok-line)}.kpi.ok .v{color:var(--ok)}
+.kpi.bad{background:var(--bad-soft);border-color:var(--bad-line)}.kpi.bad .v{color:var(--bad)}
+.sk{display:flex;justify-content:center;overflow-x:auto}
+.sk svg{max-width:100%;height:auto}
+/* Memoria */
+#memoria{font-size:13.5px}
+#memoria{overflow-x:auto}
+#memoria h1{font-size:17px;text-align:center;margin:4px 0 12px;color:var(--head);text-wrap:balance}
+#memoria h2{font-size:14.5px;margin:20px 0 8px;color:var(--head);border-bottom:1px solid var(--line);padding-bottom:3px}
+#memoria h3{font-size:13.5px;margin:14px 0 6px}
+#memoria table{border-collapse:collapse;margin:6px 0 10px;font-size:12.5px;width:100%}
+#memoria th,#memoria td{border:1px solid var(--cell);padding:3px 6px;text-align:left;vertical-align:top}
+#memoria th{background:var(--th)}
+#memoria td.n,#memoria th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+#memoria .eq{font-family:Consolas,"Cambria Math",monospace;background:var(--eq);overflow-x:auto;border-left:3px solid var(--accent);padding:4px 10px;margin:4px 0;white-space:pre-wrap;font-size:12.5px}
+#memoria .ok{color:var(--ok);font-weight:700}
+#memoria .bad{color:var(--bad);font-weight:700}
+#memoria .note{font-size:12px;color:var(--muted)}
+.tablewrap{overflow-x:auto}
+@media print{
+  header,.inputs,#cardRes,#cardSk{display:none!important}
+  .layout{display:block;padding:0}
+  .card{border:none;padding:0}
+  body{background:#fff}
+}
+</style>
+<header>
+  <div>
+    <h1>Fundaciones de postes de media tensión</h1>
+    <p>Postes de HºAº simples y dobles · cargas según AEA 95301 · método de Sulzberger · zona de referencia: Chaco</p>
+  </div>
+  <div class="btns">
+    <span id="wordMsg" role="status"></span>
+    <button id="btnWord" class="primary">Exportar memoria a Word</button>
+    <button id="btnPrint">Imprimir / PDF</button>
+  </div>
+</header>
+
+<main class="layout">
+<form class="inputs" id="frm" onsubmit="return false">
+
+<details open><summary>1 · Proyecto y configuración</summary><div class="body grid">
+  <label class="full">Obra / proyecto<input id="obra" value="Línea aérea de MT"></label>
+  <label>Ubicación<input id="ubic" value="Provincia del Chaco"></label>
+  <label>Estructura Nº / piquete<input id="piq" value="E-01"></label>
+  <label class="full">Calculista<input id="autor" value=""></label>
+  <div class="full"><label>Modo de cargas</label>
+    <div class="seg">
+      <label><input type="radio" name="modo" value="linea" checked> Calcular desde la línea</label>
+      <label><input type="radio" name="modo" value="directo"> Fuerzas directas</label>
+      <label><input type="radio" name="modo" value="reac"> Reacciones en la base</label>
+    </div></div>
+  <div class="full"><label>Tipo de poste</label>
+    <div class="seg">
+      <label><input type="radio" name="tipo" value="simple" checked> Simple</label>
+      <label><input type="radio" name="tipo" value="doble"> Doble</label>
+    </div></div>
+  <label>Tensión nominal<select id="tension"><option value="13.2">13,2 kV</option><option value="33">33 kV</option></select></label>
+  <label>Tipo de estructura<select id="estr">
+    <option value="susp">Suspensión (alineación)</option>
+    <option value="suspAng">Suspensión angular</option>
+    <option value="ret">Retención (alineación)</option>
+    <option value="retAng">Retención angular / desvío</option>
+    <option value="term">Terminal</option>
+  </select></label>
+</div></details>
+
+<details open><summary>2 · Poste de hormigón armado</summary><div class="body grid">
+  <label class="full">Poste (catálogo L/R)<select id="posteSel"></select></label>
+  <label>Longitud total L (m)<input id="L" type="number" step="any"></label>
+  <label>Carga nominal R a 0,25 m de la cima (daN)<input id="R" type="number" step="any"></label>
+  <label>Ø en la cima (m)<input id="Dc" type="number" step="any"></label>
+  <label>Ø en la base (m)<input id="Db" type="number" step="any"></label>
+  <label>Peso de cada poste (kg)<input id="Pp" type="number" step="any"></label>
+  <label>Empotramiento e (m)<input id="e" type="number" step="any"></label>
+  <label class="chk full"><input type="checkbox" id="eAuto" checked> Empotramiento automático e = 0,10·L</label>
+  <label>Coef. seguridad del poste, hipótesis normal<input id="CSn" type="number" step="any" value="1"></label>
+  <label>Coef. seguridad del poste, hipótesis excepcional<input id="CSe" type="number" step="any" value="1"></label>
+  <div class="full hint">El catálogo usa diámetros y pesos aproximados (conicidad 1,5 cm/m). Ajustalos con los datos del fabricante. La carga R se toma como carga nominal de la norma IRAM aplicada a 0,25 m de la cima. Si tu especificación trabaja con la carga de rotura, cargá el coeficiente de seguridad que corresponda.</div>
+  <div class="full grid" id="dobleBox" style="padding:0">
+    <label>Separación entre ejes de los postes (m)<input id="sep" type="number" step="any" value="0.6"></label>
+    <label>Orientación del plano de los postes<select id="orient"><option value="y">Transversal a la línea (bisectriz)</option><option value="x">Longitudinal (eje de la línea)</option></select></label>
+    <label>Factor de resistencia en el plano (×R)<input id="kPl" type="number" step="any" value="4"></label>
+    <label>Factor de resistencia perpendicular (×R)<input id="kPe" type="number" step="any" value="2"></label>
+    <div class="full hint">Poste doble vinculado: resistencia ≈ 4 a 4,5·R en el plano de los postes y 2·R en la dirección perpendicular. Verificá estos valores con el fabricante.</div>
+  </div>
+</div></details>
+
+<details open id="boxLinea"><summary>3 · Línea, conductores y equipos</summary><div class="body grid">
+  <label>Ángulo de desvío β (°)<input id="ang" type="number" step="any" value="0"></label>
+  <label>Factor de tiro por corte en suspensión<input id="fcorte" type="number" step="any" value="0.5"></label>
+  <label>Vano de viento (m)<input id="vanoV" type="number" step="any" value="100"></label>
+  <label>Vano de peso (m)<input id="vanoP" type="number" step="any" value="100"></label>
+  <div class="full hint">Terminal: vano de viento = semivano. El tiro máximo de cada conductor sale del cálculo mecánico (estado de máxima solicitación).</div>
+  <div class="full">
+    <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:12.5px">Conductores e hilo de guardia</b>
+      <span><button class="small" type="button" id="btnTipica">Disposición típica</button> <button class="small" type="button" id="addCond">+ Conductor</button></span></div>
+    <table class="rows"><thead><tr><th>Conductor</th><th>Dist. bajo cima (m)</th><th>Tiro máx. (daN)</th><th></th></tr></thead><tbody id="tbCond"></tbody></table>
+  </div>
+  <div class="full">
+    <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:12.5px">Crucetas, aisladores y equipos</b>
+      <button class="small" type="button" id="addElem">+ Elemento</button></div>
+    <table class="rows"><thead><tr><th>Elemento</th><th>Peso (kg)</th><th>Área (m²)</th><th>Cf</th><th>Dist. bajo cima (m)</th><th></th></tr></thead><tbody id="tbElem"></tbody></table>
+  </div>
+</div></details>
+
+<details open id="boxDirecto" style="display:none"><summary>3 · Fuerzas directas</summary><div class="body">
+  <div style="display:flex;justify-content:flex-end"><button class="small" type="button" id="addHip">+ Hipótesis</button></div>
+  <table class="rows"><thead><tr><th>Hipótesis</th><th>Tipo</th><th>F transv. (daN)</th><th>F long. (daN)</th><th>Dist. bajo cima (m)</th><th>Carga vertical adicional (daN)</th><th></th></tr></thead><tbody id="tbHip"></tbody></table>
+  <label class="chk" style="margin-top:8px"><input type="checkbox" id="vPosteDir" checked> Sumar viento sobre el poste en las hipótesis normales (transversal)</label>
+  <p class="hint">Fuerzas horizontales ya mayoradas o de servicio, aplicadas a la distancia indicada bajo la cima. Para la carga en la cima del poste, usá 0,25 m.</p>
+</div></details>
+
+<details open id="boxReac" style="display:none"><summary>3 · Reacciones en la base (nivel del terreno)</summary><div class="body">
+  <div style="display:flex;justify-content:flex-end"><button class="small" type="button" id="addReac">+ Hipótesis</button></div>
+  <div id="listReac" style="display:flex;flex-direction:column;gap:10px;margin-top:6px"></div>
+  <label class="chk" style="margin-top:8px"><input type="checkbox" id="nIncl" checked> Las reacciones N ya incluyen el peso de los postes</label>
+  <p class="hint">Reacciones de cada poste a nivel del terreno, por ejemplo las que da un programa de cálculo estructural. N positiva = compresión, negativa = tracción. Vt y Mt corresponden a la dirección transversal (y); Vℓ y Mℓ, a la longitudinal (x). V y M llevan el mismo signo cuando la carga empuja hacia el mismo lado. En el poste doble, el poste 1 está en −s/2 y el poste 2 en +s/2 sobre el plano de los postes, y la diferencia de N entre ambos genera un par que se suma al momento en ese plano.</p>
+</div></details>
+
+<details open><summary>4 · Clima y viento (AEA 95301)</summary><div class="body grid">
+  <label>Velocidad básica de viento V (m/s)<input id="V" type="number" step="any" value="45"></label>
+  <label>Exposición del terreno<select id="expo"><option value="C">C – campo abierto</option><option value="B">B – urbano / suburbano</option></select></label>
+  <label>Manguito de hielo (mm)<input id="hielo" type="number" step="any" value="0"></label>
+  <label>Cf de conductores<input id="Cfc" type="number" step="any" value="1.0"></label>
+  <label>Factor de ráfaga G, conductores<input id="Gc" type="number" step="any" value="1.0"></label>
+  <label>Factor de ráfaga G, estructura<input id="Gt" type="number" step="any" value="1.0"></label>
+  <label>Cf de poste (sección circular)<input id="Cfp" type="number" step="any" value="0.7"></label>
+  <div class="full hint">Chaco: zona cálida sin formación de hielo. V = 45 m/s es un valor de referencia que conviene verificar con el mapa de velocidades de la AEA 95301 / CIRSOC 102 para la localidad. G = 1,0 es conservador: ajustalo según los factores Gw/Gt de la AEA 95301.</div>
+</div></details>
+
+<details open><summary>5 · Suelo</summary><div class="body grid">
+  <label class="full">Tipo de suelo<select id="sueloSel"></select></label>
+  <label>Coef. de compresibilidad C a 2 m (kg/cm³)<input id="C" type="number" step="any"></label>
+  <label>Relación Cb / Ct (fondo / pared)<input id="cbF" type="number" step="any" value="1.2"></label>
+  <label>Tensión admisible σadm (kg/cm²)<input id="sig" type="number" step="any" value="1.5"></label>
+  <label>Giro admisible tg α<input id="tga" type="number" step="any" value="0.01"></label>
+  <div class="full hint">Los suelos del Chaco suelen ser limo-arcillosos y húmedos. Si tenés estudio de suelos, cargá el C medido.</div>
+</div></details>
+
+<details open><summary>6 · Fundación</summary><div class="body grid">
+  <div class="full"><label>Dimensionado</label>
+    <div class="seg">
+      <label><input type="radio" name="fmodo" value="auto" checked> Automático</label>
+      <label><input type="radio" name="fmodo" value="manual"> Verificar medidas</label>
+    </div></div>
+  <label>Espesor bajo el poste (m)<input id="tFondo" type="number" step="any" value="0.2"></label>
+  <label>Peso esp. hormigón (kg/m³)<input id="gH" type="number" step="any" value="2200"></label>
+  <label id="lbA">Lado a (m)<input id="aM" type="number" step="any" value="1.0"></label>
+  <label id="lbB">Lado b (m)<input id="bM" type="number" step="any" value="1.0"></label>
+  <label>Profundidad t (m)<input id="tM" type="number" step="any" value="1.4"></label>
+  <div class="full hint" id="hintFund">Automático: profundidad t = e + espesor bajo el poste; el lado crece de a 5 cm hasta verificar. Si supera 4 m, aumenta t de a 10 cm.</div>
+</div></details>
+
+</form>
+
+<section class="outputs">
+  <div class="card" id="cardRes"><h2>Resultado</h2><div class="kpis" id="kpis"></div><div class="tablewrap" id="resTabla" style="margin-top:12px"></div></div>
+  <div class="card" id="cardSk"><h2>Esquema (sin escala)</h2><div class="sk" id="sketch"></div></div>
+  <div class="card"><div id="memoria"></div></div>
+</section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+"use strict";
+/* ============================ CATÁLOGOS ============================ */
+// Conductores: s = sección total (mm²), d = diámetro (mm), p = peso (kg/km), r = carga de rotura (daN). Valores aproximados.
+const COND = {
+  "Al/Ac 25/4":   {s:27.8, d:6.8,  p:100, r:920},
+  "Al/Ac 35/6":   {s:40.1, d:8.1,  p:140, r:1230},
+  "Al/Ac 50/8":   {s:56.3, d:9.6,  p:195, r:1680},
+  "Al/Ac 70/12":  {s:81.3, d:11.7, p:282, r:2630},
+  "Al/Ac 95/15":  {s:109.7,d:13.6, p:383, r:3490},
+  "Al/Ac 120/20": {s:141.4,d:15.5, p:494, r:4410},
+  "Al/Ac 150/25": {s:173.1,d:17.1, p:604, r:5400},
+  "Al/Ac 185/30": {s:213.6,d:19.0, p:744, r:6620},
+  "Al aleación 25 mm²":  {s:24.2, d:6.3,  p:68,  r:735},
+  "Al aleación 35 mm²":  {s:34.4, d:7.5,  p:94,  r:1015},
+  "Al aleación 50 mm²":  {s:49.5, d:9.0,  p:135, r:1460},
+  "Al aleación 70 mm²":  {s:65.8, d:10.5, p:180, r:1945},
+  "Al aleación 95 mm²":  {s:93.3, d:12.5, p:257, r:2750},
+  "Al aleación 120 mm²": {s:117.0,d:14.0, p:322, r:3450},
+  "Al aleación 150 mm²": {s:147.1,d:15.75,p:405, r:4340},
+  "Al aleación 185 mm²": {s:181.6,d:17.5, p:500, r:5360},
+  "Acero cincado 25 mm² (guardia)": {s:24.2, d:6.3, p:195, r:2900},
+  "Acero cincado 35 mm² (guardia)": {s:34.4, d:7.5, p:275, r:4100},
+  "Acero cincado 50 mm² (guardia)": {s:49.5, d:9.0, p:395, r:5900}
+};
+// Postes de HºAº más usados en MT (L en m / R en daN)
+const POSTES = ["9/300","9/600","9/900","10/600","10/900","10.5/600","10.5/900","10.5/1200","11/600","11/900","11/1200",
+  "12/600","12/900","12/1200","12/1500","12/1800","12/2100","13/900","13/1200","13/1500","13/1800","13/2100","13/2400",
+  "14/1200","14/1500","14/1800","14/2100","15/1500","15/1800","15/2100","15/2400"];
+const DCIMA = {300:.14,450:.16,600:.17,900:.20,1200:.22,1500:.24,1800:.26,2100:.28,2400:.30};
+function datosPoste(sel){
+  const [L,R] = sel.split("/").map(Number);
+  const dc = DCIMA[R], db = dc + 0.015*L;           // conicidad 1,5 cm/m
+  const tw = 0.05 + R/100000;                        // espesor de pared aprox. (centrifugado)
+  const dm = (dc+db)/2;
+  const peso = Math.round(2500*Math.PI*(dm-tw)*tw*L/10)*10;
+  return {L, R, dc:+dc.toFixed(3), db:+db.toFixed(3), peso};
+}
+// Coeficiente de compresibilidad C a 2 m (kg/cm³), tabla de Sulzberger
+const SUELOS = [
+  ["Terreno pantanoso / turba ligera", 0.5, 1.0],
+  ["Turba pesada / arena fina de playa", 1.0, 1.5],
+  ["Arcilla saturada (depósitos de arcilla espesa)", 2.0, 3.0],
+  ["Arcilla húmeda / limo arcilloso (típico del Chaco)", 4.0, 5.0],
+  ["Arcilla seca / limo compacto", 6.0, 8.0],
+  ["Arcilla seca muy dura", 10.0, 10.0],
+  ["Arena fina a media húmeda", 8.0, 10.0],
+  ["Grava arenosa compacta", 10.0, 20.0],
+  ["Personalizado (estudio de suelos)", null, null]
+];
+// Tabla de Sulzberger: coeficiente s en función de Ms/Mb
+const STAB = [[0,1.5],[0.1,1.383],[0.2,1.317],[0.3,1.26],[0.4,1.208],[0.5,1.15],[0.6,1.115],[0.7,1.075],[0.8,1.04],[0.9,1.017],[1.0,1.0]];
+function sFactor(r){
+  if (!isFinite(r) || r >= 1) return 1.0;
+  if (r <= 0) return 1.5;
+  for (let i=1;i<STAB.length;i++){ if (r <= STAB[i][0]) { const [x0,y0]=STAB[i-1],[x1,y1]=STAB[i]; return y0+(y1-y0)*(r-x0)/(x1-x0); } }
+  return 1.0;
+}
+const KGF = 0.980665; // 1 kgf = 0,981 daN
+
+/* ============================ UTILIDADES ============================ */
+const $ = id => document.getElementById(id);
+const num = id => { const v = parseFloat(String($(id).value).replace(",", ".")); return isFinite(v) ? v : 0; };
+const pf = v => { const x = parseFloat(String(v).replace(",", ".")); return isFinite(x) ? x : 0; };
+const f = (x,d=2) => (x===Infinity ? "∞" : isFinite(x) ? x.toLocaleString("es-AR",{minimumFractionDigits:d,maximumFractionDigits:d}) : "—");
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const radio = n => document.querySelector(`input[name=${n}]:checked`).value;
+const ceil5 = x => Math.ceil(x/0.05 - 1e-9)*0.05;
+const sci = x => { if (!isFinite(x) || x===0) return f(x); const e = Math.floor(Math.log10(Math.abs(x))); if (e < 5) return f(x,0); return f(x/Math.pow(10,e),3)+"·10"+String(e).split("").map(c=>"⁰¹²³⁴⁵⁶⁷⁸⁹"[c]).join(""); };
+const okTxt = ok => ok ? '<span class="ok">VERIFICA</span>' : '<span class="bad">NO VERIFICA</span>';
+
+/* ============================ TABLAS DINÁMICAS ============================ */
+function condRow(c){
+  const tr = document.createElement("tr");
+  tr.innerHTML = `<td><select class="c-tipo">${Object.keys(COND).map(k=>`<option${k===c.tipo?" selected":""}>${k}</option>`).join("")}</select></td>
+    <td><input class="c-dist" type="number" step="any" value="${c.dist}"></td>
+    <td><input class="c-T" type="number" step="any" value="${c.T}"></td>
+    <td><button class="small" type="button" title="Quitar">✕</button></td>`;
+  tr.querySelector("button").onclick = () => { tr.remove(); calc(); };
+  tr.querySelector(".c-tipo").onchange = e => { tr.querySelector(".c-T").value = Math.round(0.30*COND[e.target.value].r/10)*10; calc(); };
+  $("tbCond").appendChild(tr);
+}
+function elemRow(e){
+  const tr = document.createElement("tr");
+  tr.innerHTML = `<td><input class="e-n" value="${esc(e.n)}"></td>
+    <td><input class="e-p" type="number" step="any" value="${e.p}"></td>
+    <td><input class="e-a" type="number" step="any" value="${e.a}"></td>
+    <td><input class="e-cf" type="number" step="any" value="${e.cf}"></td>
+    <td><input class="e-d" type="number" step="any" value="${e.d}"></td>
+    <td><button class="small" type="button" title="Quitar">✕</button></td>`;
+  tr.querySelector("button").onclick = () => { tr.remove(); calc(); };
+  $("tbElem").appendChild(tr);
+}
+function hipRow(h){
+  const tr = document.createElement("tr");
+  tr.innerHTML = `<td><input class="h-n" value="${esc(h.n)}"></td>
+    <td><select class="h-t"><option value="N"${h.t==="N"?" selected":""}>Normal</option><option value="E"${h.t==="E"?" selected":""}>Excepcional</option></select></td>
+    <td><input class="h-ft" type="number" step="any" value="${h.ft}"></td>
+    <td><input class="h-fl" type="number" step="any" value="${h.fl}"></td>
+    <td><input class="h-d" type="number" step="any" value="${h.d}"></td>
+    <td><input class="h-g" type="number" step="any" value="${h.g}"></td>
+    <td><button class="small" type="button" title="Quitar">✕</button></td>`;
+  tr.querySelector("button").onclick = () => { tr.remove(); calc(); };
+  $("tbHip").appendChild(tr);
+}
+const RK = ["N","Vt","Vl","Mt","Ml"];
+function reacRow(h){
+  const div = document.createElement("div"); div.className = "reac";
+  const dob = radio("tipo") === "doble";
+  const fila = (i, p) => `<tr class="p${i+1}"${i===1 && !dob ? " hidden" : ""}><td>Poste ${i+1}</td>${RK.map(k=>`<td><input class="r-${k}" type="number" step="any" value="${p[k]}"></td>`).join("")}</tr>`;
+  div.innerHTML = `<div class="reac-head"><input class="r-n" value="${esc(h.n)}" aria-label="Nombre de la hipótesis">
+      <select class="r-t" aria-label="Tipo de hipótesis"><option value="N"${h.t==="N"?" selected":""}>Normal</option><option value="E"${h.t==="E"?" selected":""}>Excepcional</option></select>
+      <button class="small" type="button" title="Quitar">✕</button></div>
+    <table class="rows"><thead><tr><th></th><th>N (daN)</th><th>Vt (daN)</th><th>Vℓ (daN)</th><th>Mt (daN·m)</th><th>Mℓ (daN·m)</th></tr></thead>
+    <tbody>${fila(0, h.p[0])}${fila(1, h.p[1])}</tbody></table>`;
+  div.querySelector("button").onclick = () => { div.remove(); calc(); };
+  $("listReac").appendChild(div);
+}
+function disposicionTipica(){
+  $("tbCond").innerHTML = ""; $("tbElem").innerHTML = "";
+  if ($("tension").value === "13.2"){
+    [0.30,0.30,0.30].forEach(d => condRow({tipo:"Al/Ac 50/8", dist:d, T:500}));
+    elemRow({n:"Cruceta HºAº + ménsulas", p:90, a:0.25, cf:1.6, d:0.30});
+    elemRow({n:"Aisladores y morsetería (3)", p:30, a:0.12, cf:1.2, d:0.20});
+    $("vanoV").value = 100; $("vanoP").value = 100;
+  } else {
+    condRow({tipo:"Al/Ac 70/12", dist:0.20, T:790});
+    condRow({tipo:"Al/Ac 70/12", dist:1.20, T:790});
+    condRow({tipo:"Al/Ac 70/12", dist:1.20, T:790});
+    elemRow({n:"Cruceta HºAº 33 kV + ménsulas", p:140, a:0.40, cf:1.6, d:1.20});
+    elemRow({n:"Aisladores y morsetería (3)", p:45, a:0.25, cf:1.2, d:0.70});
+    $("vanoV").value = 120; $("vanoP").value = 120;
+  }
+}
+
+/* ============================ LECTURA DE DATOS ============================ */
+function leer(){
+  const I = {};
+  ["L","R","Dc","Db","Pp","e","sep","kPl","kPe","CSn","CSe","ang","fcorte","vanoV","vanoP","V","hielo","Gc","Gt","Cfc","Cfp",
+   "C","cbF","sig","tga","gH","tFondo","aM","bM","tM"].forEach(k => I[k] = num(k));
+  I.modo = radio("modo"); I.tipo = radio("tipo"); I.fmodo = radio("fmodo");
+  I.tension = $("tension").value; I.estr = $("estr").value; I.expo = $("expo").value; I.orient = $("orient").value;
+  I.posteSel = $("posteSel").value; I.suelo = SUELOS[+$("sueloSel").value][0];
+  I.vPosteDir = $("vPosteDir").checked; I.nIncl = $("nIncl").checked;
+  I.reac = [...document.querySelectorAll("#listReac .reac")].map(d => ({n:d.querySelector(".r-n").value, t:d.querySelector(".r-t").value,
+    p:[...d.querySelectorAll("tbody tr")].map(tr => Object.fromEntries(RK.map(k => [k, pf(tr.querySelector(".r-"+k).value)])))}));
+  I.obra = $("obra").value; I.ubic = $("ubic").value; I.piq = $("piq").value; I.autor = $("autor").value;
+  I.conds = [...$("tbCond").rows].map(r => ({tipo:r.querySelector(".c-tipo").value, dist:pf(r.querySelector(".c-dist").value), T:pf(r.querySelector(".c-T").value)}));
+  I.elems = [...$("tbElem").rows].map(r => ({n:r.querySelector(".e-n").value, p:pf(r.querySelector(".e-p").value), a:pf(r.querySelector(".e-a").value), cf:pf(r.querySelector(".e-cf").value), d:pf(r.querySelector(".e-d").value)}));
+  I.hdir = [...$("tbHip").rows].map(r => ({n:r.querySelector(".h-n").value, t:r.querySelector(".h-t").value, ft:pf(r.querySelector(".h-ft").value), fl:pf(r.querySelector(".h-fl").value), d:pf(r.querySelector(".h-d").value), g:pf(r.querySelector(".h-g").value)}));
+  return I;
+}
+
+/* ============================ CÁLCULO ============================ */
+const ESTR_TXT = {susp:"Suspensión (alineación)", suspAng:"Suspensión angular", ret:"Retención (alineación)", retAng:"Retención angular / desvío", term:"Terminal"};
+function Kz(z, expo){ const p = expo==="B" ? {a:7, zg:366} : {a:9.5, zg:274}; return 2.01*Math.pow(Math.max(z,4.6)/p.zg, 2/p.a); }
+
+function sulz(ap, bp, t, G, Ct, Cb, tga, Mv){
+  const Ms = bp*Math.pow(t,3)/36*Ct*tga;
+  const term = G/(bp*ap*ap*Cb*tga);
+  let Mb = G*ap*(0.5 - 0.47*Math.sqrt(term)); if (Mb < 0) Mb = 0;
+  const ratio = Mb > 0 ? Ms/Mb : Infinity;
+  const s = sFactor(ratio), Mr = Ms + Mb, req = s*Mv;
+  return {ap, bp, Ms, Mb, term, ratio, s, Mr, Mv, req, ok: Mr >= req - 1e-9, util: Mr>0 ? req/Mr : Infinity, FS: Mv>0 ? Mr/Mv : Infinity};
+}
+
+function calcular(I){
+  const R = {I, warn:[]};
+  const doble = I.tipo === "doble", n = doble ? 2 : 1;
+  const hl = I.L - I.e, href = hl - 0.25;
+  const Dg = I.Dc + (I.Db - I.Dc)*hl/I.L, Dmemp = (Dg + I.Db)/2;
+  Object.assign(R, {doble, n, hl, href, Dg, Dmemp});
+  const kz = z => Kz(z, I.expo), q = z => 0.613*kz(z)*I.V*I.V/10; // daN/m²
+  R.q = q; R.kz = kz;
+  if (hl <= 0.5) R.warn.push("La altura libre resulta nula o negativa: revisá L y el empotramiento.");
+  if (I.e < 0.1*I.L - 1e-6) R.warn.push(`El empotramiento e = ${f(I.e)} m es menor que 0,10·L = ${f(0.1*I.L)} m.`);
+
+  // --- Viento sobre el poste
+  const Ap = n*hl*(I.Dc + Dg)/2, zc = hl*(Dg + 2*I.Dc)/(3*(Dg + I.Dc));
+  const Fp = q(zc)*I.Gt*I.Cfp*Ap;
+  R.vPoste = {Ap, zc, Kz:kz(zc), q:q(zc), F:Fp};
+
+  // --- Cargas verticales permanentes
+  const vert = [{desc: doble ? "Postes (2)" : "Poste", P: n*I.Pp*KGF}];
+  let conds = [], elems = [];
+  if (I.modo === "linea"){
+    conds = I.conds.map((c,i) => {
+      const k = COND[c.tipo], d = k.d/1000, dh = d + 2*I.hielo/1000;
+      const wi = 900*Math.PI/4*(dh*dh - d*d);           // kg/m de hielo
+      const h = hl - c.dist;
+      return {...c, i:i+1, k, d, dh, wi, h, Kz:kz(h), q:q(h), F:q(h)*I.Gc*I.Cfc*dh*I.vanoV, P:(k.p/1000 + wi)*I.vanoP*KGF};
+    });
+    elems = I.elems.map(e => { const h = hl - e.d; return {...e, h, Kz:kz(h), q:q(h), F:q(h)*I.Gt*e.cf*e.a, P:e.p*KGF}; });
+    conds.forEach(c => vert.push({desc:`Conductor ${c.i} (${c.tipo})${I.hielo>0?" + hielo":""} · vano de peso ${f(I.vanoP,0)} m`, P:c.P}));
+    elems.forEach(e => vert.push({desc:e.n, P:e.P}));
+  }
+  R.conds = conds; R.elems = elems; R.vert = vert;
+  const Gperm = vert.reduce((s,v) => s + v.P, 0); R.Gperm = Gperm;
+
+  // --- Hipótesis de carga
+  const hyps = [];
+  const poleF = {desc:"Viento sobre poste" + (doble?"s":""), Fx:0, Fy:Fp, h:zc};
+  if (I.modo === "linea"){
+    const ang = (I.estr === "suspAng" || I.estr === "retAng"), susp = (I.estr === "susp" || I.estr === "suspAng");
+    const beta = ang ? I.ang*Math.PI/180 : 0, c2 = Math.cos(beta/2), s2 = Math.sin(beta/2);
+    R.beta = beta;
+    // H1: viento máximo
+    const F1 = [];
+    conds.forEach(c => {
+      let Fx = 0, Fy = c.F*c2;
+      if (ang) Fy += 2*c.T*s2;
+      if (I.estr === "term") Fx = c.T;
+      F1.push({desc:`Conductor ${c.i}: viento${ang?" ·cos(β/2) + resultante de tiros 2T·sen(β/2)":""}${I.estr==="term"?" + tiro unilateral T":""}`, Fx, Fy, h:c.h});
+    });
+    elems.forEach(e => F1.push({desc:`Viento sobre ${e.n}`, Fx:0, Fy:e.F, h:e.h}));
+    F1.push(poleF);
+    let d1 = "Viento máximo perpendicular a la línea";
+    if (ang) d1 += ` (sobre la bisectriz) más la resultante de los tiros por el ángulo β = ${f(I.ang,1)}°`;
+    if (I.estr === "term") d1 += " más el tiro unilateral máximo de todos los conductores";
+    hyps.push({nombre:"H1 – Viento máximo" + (I.estr==="term" ? " + tiro unilateral" : ""), tipo:"N", desc:d1, forces:F1, Gv:Gperm});
+    // H2: corte de un conductor
+    if (I.estr !== "term" && conds.length){
+      let k = 0, best = -1;
+      conds.forEach((c,i) => { const m = c.T*c.h; if (m > best){ best = m; k = i; } });
+      const fc = susp ? I.fcorte : 1;
+      const F2 = conds.map((c,i) => {
+        if (i === k) return {desc:`Conductor ${c.i} cortado: tiro del lado sano${susp?` × ${f(fc)}`:""}`, Fx: fc*c.T*(ang?c2:1), Fy: ang ? c.T*s2 : 0, h:c.h};
+        return {desc:`Conductor ${c.i}: ${ang?"resultante de tiros 2T·sen(β/2)":"tiros equilibrados"}`, Fx:0, Fy: ang ? 2*c.T*s2 : 0, h:c.h};
+      });
+      hyps.push({nombre:"H2 – Corte de un conductor", tipo:"E",
+        desc:`Rotura del conductor más desfavorable (conductor ${conds[k].i}), sin viento${susp?`. En suspensión, el tiro desequilibrado se reduce con el factor ${f(fc)} por el desplazamiento de la cadena`:""}`,
+        forces:F2, Gv:Gperm});
+    }
+  } else if (I.modo === "reac") {
+    // Reacciones a nivel del terreno. Mx = Mℓ (vuelco longitudinal), My = Mt (vuelco transversal)
+    if (I.nIncl) vert.length = 0;
+    const Gp = I.nIncl ? 0 : n*I.Pp*KGF;
+    I.reac.forEach(r => {
+      const P = r.p.slice(0, n);
+      const sum = k => P.reduce((s,p) => s + p[k], 0);
+      const coup = doble ? (P[1].N - P[0].N)*I.sep/2 : 0;   // par por diferencia de axiles
+      const Nsum = sum("N");
+      hyps.push({nombre:r.n, tipo:r.t, react:true, P, Nsum, coup, forces:[],
+        desc:"Reacciones en la base ingresadas por el usuario" + (doble ? `. El par de los axiles (N2 − N1)·s/2 se suma al momento en el plano de los postes (${I.orient==="y"?"transversal":"longitudinal"})` : ""),
+        Mx: sum("Ml") + (doble && I.orient === "x" ? coup : 0),
+        My: sum("Mt") + (doble && I.orient === "y" ? coup : 0),
+        Fx: sum("Vl"), Fy: sum("Vt"), Gv: Nsum + Gp});
+    });
+  } else {
+    I.hdir.forEach(h => {
+      const fz = [{desc:"Fuerza aplicada", Fx:h.fl, Fy:h.ft, h:hl - h.d}];
+      if (I.vPosteDir && h.t === "N") fz.push(poleF);
+      if (h.g) vert.push({desc:`Carga vertical adicional (${h.n})`, P:h.g, only:h.n});
+      hyps.push({nombre:h.n, tipo:h.t, desc:"Fuerzas ingresadas por el usuario" + (I.vPosteDir && h.t==="N" ? " más el viento sobre el poste" : ""), forces:fz, Gv:Gperm + h.g});
+    });
+  }
+
+  // --- Verificación del poste
+  hyps.forEach(h => {
+    if (!h.react){
+      h.Mx = h.forces.reduce((s,F) => s + F.Fx*F.h, 0);
+      h.My = h.forces.reduce((s,F) => s + F.Fy*F.h, 0);
+      h.Fx = h.forces.reduce((s,F) => s + F.Fx, 0);
+      h.Fy = h.forces.reduce((s,F) => s + F.Fy, 0);
+    }
+    h.Feqx = h.Mx/href; h.Feqy = h.My/href;
+    const CS = h.tipo === "E" ? I.CSe : I.CSn; h.CS = CS;
+    if (!doble){
+      h.Feq = Math.hypot(h.Feqx, h.Feqy); h.Radm = I.R/CS; h.utilP = h.Feq/h.Radm;
+    } else {
+      const inPlane = I.orient === "y" ? Math.abs(h.Feqy) : Math.abs(h.Feqx);
+      const perp    = I.orient === "y" ? Math.abs(h.Feqx) : Math.abs(h.Feqy);
+      h.Fpl = inPlane; h.Fpe = perp; h.Rpl = I.kPl*I.R/CS; h.Rpe = I.kPe*I.R/CS;
+      h.utilP = h.Fpl/h.Rpl + h.Fpe/h.Rpe;
+    }
+    h.okP = h.utilP <= 1 + 1e-9;
+  });
+  R.hyps = hyps;
+
+  // --- Fundación
+  const Cd = I.C*KGF*1e6; // daN/m³
+  R.Cd = Cd;
+  const verificar = (a, b, t) => {
+    const Vexc = a*b*t, Vpos = n*Math.PI*Dmemp*Dmemp/4*I.e, Vh = Vexc - Vpos, Ph = Vh*I.gH*KGF;
+    const Ct = Cd*t/2, Cb = I.cbF*Ct;
+    let ok = true, utilMax = 0, sigMax = 0;
+    const res = hyps.map(h => {
+      const G = h.Gv + Ph;
+      // Mv = M en el terreno + V · 2/3·t  (equivale a Σ F·(h + 2/3·t))
+      const Mvx = h.Mx + h.Fx*2*t/3;
+      const Mvy = h.My + h.Fy*2*t/3;
+      const dirs = [];
+      if (!doble){
+        dirs.push({lab:"Resultante", ...sulz(a, a, t, G, Ct, Cb, I.tga, Math.hypot(Mvx, Mvy))});
+      } else {
+        const pl = I.orient;
+        if (Math.abs(Mvy) > 1e-6 || Math.abs(Mvx) < 1e-6) dirs.push({lab:"Transversal (y)", ...sulz(pl==="y"?a:b, pl==="y"?b:a, t, G, Ct, Cb, I.tga, Math.abs(Mvy))});
+        if (Math.abs(Mvx) > 1e-6) dirs.push({lab:"Longitudinal (x)", ...sulz(pl==="x"?a:b, pl==="x"?b:a, t, G, Ct, Cb, I.tga, Math.abs(Mvx))});
+      }
+      const sig = G/(a*b)/KGF/1e4; // kg/cm²
+      dirs.forEach(d => { if (!d.ok) ok = false; utilMax = Math.max(utilMax, d.util); });
+      sigMax = Math.max(sigMax, sig);
+      return {G, Mvx, Mvy, dirs, sig};
+    });
+    const okSig = sigMax <= I.sig + 1e-9;
+    return {a, b, t, Vexc, Vpos, Vh, Ph, Ct, Cb, res, ok: ok && okSig, okSulz: ok, okSig, utilMax, sigMax};
+  };
+  let F;
+  const aMin = doble ? ceil5(Math.max(I.sep + I.Db + 0.30, 0.6)) : ceil5(Math.max(I.Db + 0.30, 0.6));
+  const bMin = ceil5(Math.max(I.Db + 0.30, 0.6));
+  R.aMin = aMin; R.bMin = bMin;
+  if (I.fmodo === "auto" && hyps.length){
+    const t0 = I.e + I.tFondo;
+    outer:
+    for (let tt = t0; tt <= t0 + 1.5 + 1e-9; tt += 0.10){
+      for (let k = 0; k <= 80; k++){
+        const a = +(aMin + 0.05*k).toFixed(2), b = doble ? +(bMin + 0.05*k).toFixed(2) : a;
+        if (Math.max(a,b) > 4.0 + 1e-9) break;
+        F = verificar(a, b, +tt.toFixed(2));
+        if (F.ok) break outer;
+      }
+    }
+    if (F && !F.ok) R.warn.push("No se encontró una fundación que verifique dentro de los límites de búsqueda (lado ≤ 4 m, t ≤ e + espesor + 1,5 m). Revisá las cargas o el suelo.");
+  } else {
+    const a = I.aM, b = doble ? I.bM : I.aM;
+    if (I.tM < I.e + 0.05) R.warn.push("La profundidad t es menor que el empotramiento del poste.");
+    if (a < aMin - 1e-9 || b < bMin - 1e-9) R.warn.push(`Las medidas en planta son menores que el mínimo constructivo (${f(aMin)} × ${f(doble?bMin:aMin)} m).`);
+    F = verificar(a, b, I.tM);
+  }
+  R.F = F;
+  R.ok = F && F.ok && hyps.every(h => h.okP);
+  return R;
+}
+
+/* ============================ ESQUEMA ============================ */
+function sketchSVG(R){
+  const I = R.I, F = R.F, W = 660, H = 460;
+  const top = 34, vs = (H - top - 50)/(R.hl + F.t);
+  const gy = top + R.hl*vs, cx = 200;
+  const A = F.a; // lado en el plano del dibujo
+  const hs = Math.min(230/A, 110);
+  const pole = (x0) => {
+    const w = d => d*hs/2, yb = gy + I.e*vs;
+    return `<polygon points="${x0-w(I.Dc)},${top} ${x0+w(I.Dc)},${top} ${x0+w(I.Db)},${yb} ${x0-w(I.Db)},${yb}" fill="#c9ced6" stroke="#4a525e" stroke-width="1"/>`;
+  };
+  let s = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="Arial, sans-serif" font-size="12">`;
+  s += `<rect width="${W}" height="${H}" fill="#ffffff"/>`;
+  s += `<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b3261e"/></marker>
+        <marker id="dm" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,2 L10,5 L0,8 z" fill="#333"/></marker>
+        <pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" stroke="#a88b5e" stroke-width="1"/></pattern></defs>`;
+  s += `<text x="${cx}" y="18" text-anchor="middle" font-weight="bold" fill="#14365f">Elevación${R.doble?" (plano de los postes)":""}</text>`;
+  // suelo
+  s += `<rect x="20" y="${gy}" width="360" height="${H-gy-12}" fill="url(#hatch)" opacity=".55"/>`;
+  s += `<line x1="20" y1="${gy}" x2="380" y2="${gy}" stroke="#6b5532" stroke-width="2"/>`;
+  // bloque
+  const bx = cx - A*hs/2, bw = A*hs, bh = F.t*vs;
+  s += `<rect x="${bx}" y="${gy}" width="${bw}" height="${bh}" fill="#e3e6ea" stroke="#333" stroke-width="1.5"/>`;
+  // postes
+  if (R.doble){ const d = I.sep*hs/2; s += pole(cx-d) + pole(cx+d); }
+  else s += pole(cx);
+  // fuerza
+  const rc = I.modo === "reac";
+  const fy = rc ? gy - 14 : top + 0.25*vs;
+  s += `<line x1="${cx+40}" y1="${fy}" x2="${cx+110}" y2="${fy}" stroke="#b3261e" stroke-width="2.5" marker-end="url(#ar)"/>`;
+  s += `<text x="${cx+115}" y="${fy+4}" fill="#b3261e">${rc ? "M, V, N en el terreno" : "F (a 0,25 m de la cima)"}</text>`;
+  // punto de giro
+  const oy = gy + 2*F.t*vs/3;
+  s += `<circle cx="${cx}" cy="${oy}" r="3.5" fill="#1f5fa8"/><text x="${cx+bw/2+8}" y="${oy+12}" fill="#1f5fa8" font-size="11">O (giro a 2/3·t)</text>`;
+  // cotas
+  const dim = (x1,y1,x2,y2,txt,tx,ty,anchor="middle") => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#333" marker-start="url(#dm)" marker-end="url(#dm)"/><text x="${tx}" y="${ty}" text-anchor="${anchor}" fill="#222">${txt}</text>`;
+  s += dim(60, top, 60, gy, `hl = ${f(R.hl)} m`, 66, (top+gy)/2, "start");
+  s += dim(bx-14, gy, bx-14, gy+bh, `t = ${f(F.t)}`, bx-18, gy+bh/2+4, "end");
+  s += dim(bx, gy+bh+16, bx+bw, gy+bh+16, `${R.doble?"a":"a"} = ${f(A)} m`, cx, gy+bh+32);
+  s += `<text x="${cx+bw/2+8}" y="${gy+10}" fill="#555" font-size="11">e = ${f(I.e)} m</text>`;
+  // planta
+  const px = 520, py = 120, sc = Math.min(170/Math.max(F.a, F.b), 120);
+  const pa = F.a*sc, pb = F.b*sc; // a horizontal en planta (plano de postes), b vertical
+  s += `<text x="${px}" y="18" text-anchor="middle" font-weight="bold" fill="#14365f">Planta</text>`;
+  s += `<rect x="${px-pa/2}" y="${py-pb/2}" width="${pa}" height="${pb}" fill="#e3e6ea" stroke="#333" stroke-width="1.5"/>`;
+  const pr = Math.max(I.Db*sc/2, 4);
+  if (R.doble){ const d = I.sep*sc/2; s += `<circle cx="${px-d}" cy="${py}" r="${pr}" fill="#c9ced6" stroke="#4a525e"/><circle cx="${px+d}" cy="${py}" r="${pr}" fill="#c9ced6" stroke="#4a525e"/>`; }
+  else s += `<circle cx="${px}" cy="${py}" r="${pr}" fill="#c9ced6" stroke="#4a525e"/>`;
+  s += dim(px-pa/2, py+pb/2+14, px+pa/2, py+pb/2+14, `a = ${f(F.a)} m`, px, py+pb/2+30);
+  s += dim(px+pa/2+14, py-pb/2, px+pa/2+14, py+pb/2, `b = ${f(F.b)}`, px+pa/2+18, py+4, "start");
+  // eje de línea
+  const lineHoriz = R.doble ? (I.orient === "x") : true;
+  const ly = py + pb/2 + 70;
+  if (lineHoriz){
+    s += `<line x1="${px-110}" y1="${ly}" x2="${px+110}" y2="${ly}" stroke="#1f5fa8" stroke-dasharray="8 4"/><text x="${px}" y="${ly+16}" text-anchor="middle" fill="#1f5fa8">Eje de la línea (x)</text>`;
+  } else {
+    s += `<line x1="${px-110}" y1="${ly}" x2="${px+110}" y2="${ly}" stroke="#1f5fa8" stroke-dasharray="2 4"/><text x="${px}" y="${ly+16}" text-anchor="middle" fill="#1f5fa8">Dirección transversal / bisectriz (y)</text>`;
+    s += `<text x="${px}" y="${ly+34}" text-anchor="middle" fill="#1f5fa8">El eje de la línea es perpendicular</text>`;
+  }
+  s += `<text x="${px}" y="${H-14}" text-anchor="middle" fill="#666" font-size="11">Esquema sin escala</text>`;
+  return s + `</svg>`;
+}
+
+/* ============================ MEMORIA DE CÁLCULO ============================ */
+function memoriaHTML(R, word){
+  const I = R.I, F = R.F, d = R.doble;
+  const hoy = new Date().toLocaleDateString("es-AR");
+  const n = (x,k=2) => f(x,k);
+  let h = "";
+  h += `<h1>MEMORIA DE CÁLCULO<br>Fundación de poste de hormigón armado para línea aérea de media tensión</h1>`;
+  h += `<table><tr><th style="width:28%">Obra</th><td>${esc(I.obra)}</td></tr><tr><th>Ubicación</th><td>${esc(I.ubic)}</td></tr>
+    <tr><th>Estructura</th><td>${esc(I.piq)} – ${ESTR_TXT[I.estr]}${I.modo==="directo"?" (cargas ingresadas directamente)":I.modo==="reac"?" (reacciones en la base ingresadas)":""} – ${I.tension.replace(".",",")} kV</td></tr>
+    <tr><th>Poste</th><td>${d?"Doble ":""}HºAº ${I.posteSel==="custom"?`${n(I.L)}/${n(I.R,0)}`:I.posteSel.replace(".",",")}${d?` (2 postes, separación ${n(I.sep)} m)`:""}</td></tr>
+    <tr><th>Fecha</th><td>${hoy}</td></tr>${I.autor?`<tr><th>Calculista</th><td>${esc(I.autor)}</td></tr>`:""}</table>`;
+
+  // 1
+  h += `<h2>1. Objeto y alcance</h2><p>Se dimensiona y verifica la fundación de hormigón simple, tipo bloque monolítico, del poste ${d?"doble ":""}de hormigón armado de la estructura indicada. Se verifica que el poste sea suficiente para las cargas actuantes y que el bloque resista el vuelco por el método de Sulzberger. Por último se controla la presión sobre el terreno.</p>`;
+  // 2
+  h += `<h2>2. Normativa y método</h2><ul>
+    <li>AEA 95301 – Reglamentación de líneas aéreas exteriores de media y alta tensión: zonas climáticas, acción del viento e hipótesis de carga.</li>
+    <li>IRAM 1603 / 1605 – Postes de hormigón armado: carga nominal aplicada a 0,25 m de la cima.</li>
+    <li>CIRSOC 102 – Coeficiente de exposición Kz, al que remite la AEA 95301 para la presión dinámica.</li>
+    <li>Método de Sulzberger para bloques de fundación sometidos a momento de vuelco: el terreno reacciona elásticamente en las paredes laterales y en el fondo, con un giro máximo tg α = ${n(I.tga,3)}.</li></ul>
+    <p>Unidades: fuerzas en daN, longitudes en m y momentos en daN·m. Se adopta 1 kgf = 0,981 daN.</p>`;
+  // 3
+  h += `<h2>3. Datos de partida</h2><h3>3.1 Poste</h3><table>
+    <tr><th>Longitud total L</th><td class="n">${n(I.L)} m</td><th>Carga nominal R</th><td class="n">${n(I.R,0)} daN</td></tr>
+    <tr><th>Empotramiento e</th><td class="n">${n(I.e)} m</td><th>Altura libre hl = L − e</th><td class="n">${n(R.hl)} m</td></tr>
+    <tr><th>Ø cima / Ø base</th><td class="n">${n(I.Dc,3)} / ${n(I.Db,3)} m</td><th>Ø a nivel del terreno</th><td class="n">${n(R.Dg,3)} m</td></tr>
+    <tr><th>Peso de cada poste</th><td class="n">${n(I.Pp,0)} kg</td><th>Coef. seg. normal / excepcional</th><td class="n">${n(I.CSn)} / ${n(I.CSe)}</td></tr>
+    ${d?`<tr><th>Separación entre ejes</th><td class="n">${n(I.sep)} m</td><th>Plano de los postes</th><td>${I.orient==="y"?"Transversal a la línea (y)":"Longitudinal (x)"}</td></tr>
+    <tr><th>Resistencia en el plano</th><td class="n">${n(I.kPl)}·R = ${n(I.kPl*I.R,0)} daN</td><th>Resistencia perpendicular</th><td class="n">${n(I.kPe)}·R = ${n(I.kPe*I.R,0)} daN</td></tr>`:""}
+    </table>`;
+  if (I.modo === "linea"){
+    h += `<h3>3.2 Línea y conductores</h3><table><tr><th>Tipo de estructura</th><td>${ESTR_TXT[I.estr]}</td><th>Ángulo de desvío β</th><td class="n">${(I.estr==="suspAng"||I.estr==="retAng")?n(I.ang,1)+"°":"—"}</td></tr>
+      <tr><th>Vano de viento</th><td class="n">${n(I.vanoV,0)} m</td><th>Vano de peso</th><td class="n">${n(I.vanoP,0)} m</td></tr></table>
+      <table><tr><th>Nº</th><th>Conductor</th><th class="n">Ø (mm)</th><th class="n">Peso (kg/km)</th><th class="n">Altura h (m)</th><th class="n">Tiro máx. T (daN)</th></tr>
+      ${R.conds.map(c=>`<tr><td>${c.i}</td><td>${c.tipo}</td><td class="n">${n(c.k.d,1)}</td><td class="n">${n(c.k.p,0)}</td><td class="n">${n(c.h)}</td><td class="n">${n(c.T,0)}</td></tr>`).join("")}</table>`;
+  }
+  if (I.modo !== "reac") h += `<h3>3.${I.modo==="linea"?3:2} Clima (AEA 95301)</h3><table>
+    <tr><th>Velocidad básica V</th><td class="n">${n(I.V,1)} m/s (${n(I.V*3.6,0)} km/h)</td><th>Exposición</th><td>${I.expo==="C"?"C – campo abierto":"B – urbano / suburbano"}</td></tr>
+    <tr><th>Manguito de hielo</th><td class="n">${n(I.hielo,0)} mm</td><th>G conductores / estructura</th><td class="n">${n(I.Gc)} / ${n(I.Gt)}</td></tr>
+    <tr><th>Cf conductores</th><td class="n">${n(I.Cfc)}</td><th>Cf poste</th><td class="n">${n(I.Cfp)}</td></tr></table>`;
+  h += `<h3>3.${I.modo==="linea"?4:I.modo==="reac"?2:3} Suelo y hormigón</h3><table>
+    <tr><th>Tipo de suelo</th><td colspan="3">${esc(I.suelo)}</td></tr>
+    <tr><th>Coef. de compresibilidad C (a 2 m)</th><td class="n">${n(I.C,1)} kg/cm³ = ${sci(R.Cd)} daN/m³</td><th>Relación Cb/Ct</th><td class="n">${n(I.cbF)}</td></tr>
+    <tr><th>Tensión admisible σadm</th><td class="n">${n(I.sig)} kg/cm²</td><th>Peso esp. del hormigón</th><td class="n">${n(I.gH,0)} kg/m³</td></tr></table>`;
+
+  // 4 viento
+  if (I.modo === "reac") h += `<h2>4. Acción del viento</h2><p>No se calcula por separado: las reacciones ingresadas ya incluyen todas las acciones sobre la estructura, viento incluido.</p>`;
+  else {
+  h += `<h2>4. Acción del viento</h2>
+   <p>La presión dinámica a la altura z y la fuerza sobre cada elemento son:</p>
+   <div class="eq">q(z) = 0,613 · Kz · V²   [N/m²]   (÷10 → daN/m²)
+Kz = 2,01 · (z / zg)^(2/α)   con exposición ${I.expo}: α = ${I.expo==="C"?"9,5":"7"}, zg = ${I.expo==="C"?"274":"366"} m, z ≥ 4,6 m
+F = q(z) · G · Cf · A</div>
+   <p>Para el poste, el área expuesta es el trapecio de altura hl. La fuerza se aplica en su baricentro:</p>
+   <div class="eq">A = n · hl · (Øcima + Øterreno)/2 = ${R.n} · ${n(R.hl)} · (${n(I.Dc,3)} + ${n(R.Dg,3)})/2 = ${n(R.vPoste.Ap,3)} m²
+zc = hl · (Øt + 2·Øc) / [3·(Øt + Øc)] = ${n(R.vPoste.zc)} m</div>`;
+  h += `<table><tr><th>Elemento</th><th class="n">z (m)</th><th class="n">Kz</th><th class="n">q (daN/m²)</th><th class="n">G</th><th class="n">Cf</th><th class="n">A (m²)</th><th class="n">F (daN)</th></tr>`;
+  R.conds.forEach(c => h += `<tr><td>Conductor ${c.i} (${c.tipo}${I.hielo>0?", Ø con hielo "+n(c.dh*1000,1)+" mm":""}) · A = Ø·vano</td><td class="n">${n(c.h)}</td><td class="n">${n(c.Kz,3)}</td><td class="n">${n(c.q,1)}</td><td class="n">${n(I.Gc)}</td><td class="n">${n(I.Cfc)}</td><td class="n">${n(c.dh*I.vanoV,3)}</td><td class="n">${n(c.F,1)}</td></tr>`);
+  R.elems.forEach(e => h += `<tr><td>${esc(e.n)}</td><td class="n">${n(e.h)}</td><td class="n">${n(e.Kz,3)}</td><td class="n">${n(e.q,1)}</td><td class="n">${n(I.Gt)}</td><td class="n">${n(e.cf)}</td><td class="n">${n(e.a,3)}</td><td class="n">${n(e.F,1)}</td></tr>`);
+  h += `<tr><td>Poste${d?"s (2)":""}</td><td class="n">${n(R.vPoste.zc)}</td><td class="n">${n(R.vPoste.Kz,3)}</td><td class="n">${n(R.vPoste.q,1)}</td><td class="n">${n(I.Gt)}</td><td class="n">${n(I.Cfp)}</td><td class="n">${n(R.vPoste.Ap,3)}</td><td class="n">${n(R.vPoste.F,1)}</td></tr></table>`;
+  if (I.modo === "directo" && !I.vPosteDir) h += `<p class="note">En modo de fuerzas directas, el viento sobre el poste no se suma a las hipótesis.</p>`;
+  }
+
+  // 5 verticales
+  if (I.modo === "reac"){
+    h += `<h2>5. Cargas verticales</h2><p>La carga vertical de cada hipótesis es la suma de las reacciones N de ${d?"los dos postes":"el poste"}${I.nIncl ? ", que ya incluyen el peso propio" : ` más el peso propio de ${d?"los postes":"el poste"} (${n(R.n*I.Pp*KGF,0)} daN)`}. El peso del bloque de hormigón se agrega en el punto 8.</p>`;
+  } else {
+  h += `<h2>5. Cargas verticales permanentes</h2><table><tr><th>Concepto</th><th class="n">P (daN)</th></tr>`;
+  R.vert.filter(v=>!v.only).forEach(v => h += `<tr><td>${esc(v.desc)}</td><td class="n">${n(v.P,1)}</td></tr>`);
+  h += `<tr><th>Total sin fundación</th><th class="n">${n(R.Gperm,1)}</th></tr></table>`;
+  }
+  if (I.modo==="linea" && I.hielo>0) h += `<p class="note">Peso del hielo: 900 kg/m³ · π/4 · (Øh² − Ø²) por metro de conductor.</p>`;
+
+  // 6 hipótesis
+  h += `<h2>6. Hipótesis de carga</h2><p>Ejes: x = longitudinal (dirección de la línea), y = transversal (perpendicular a la línea o sobre la bisectriz). Las alturas h se miden desde el nivel del terreno.</p>`;
+  R.hyps.forEach(H => {
+    if (H.react){
+      const pl = I.orient, S = k => H.P.reduce((s,p) => s + p[k], 0);
+      h += `<h3>${esc(H.nombre)} <span class="note">(${H.tipo==="E"?"excepcional":"normal"})</span></h3><p>${esc(H.desc)}.</p>
+       <table><tr><th>Poste</th><th class="n">N (daN)</th><th class="n">Vt (daN)</th><th class="n">Vℓ (daN)</th><th class="n">Mt (daN·m)</th><th class="n">Mℓ (daN·m)</th></tr>
+       ${H.P.map((p,i) => `<tr><td>${d ? `Poste ${i+1} (${i ? "+" : "−"}s/2)` : "Poste"}</td>${RK.map(k => `<td class="n">${n(p[k],0)}</td>`).join("")}</tr>`).join("")}
+       ${d ? `<tr><th>Suma</th>${RK.map(k => `<th class="n">${n(S(k),0)}</th>`).join("")}</tr>` : ""}</table>`;
+      if (d){
+        const mk = pl === "y" ? "Mt" : "Mℓ";
+        h += `<div class="eq">Par de los axiles en el plano de los postes (${pl==="y"?"transversal":"longitudinal"}):
+   (N2 − N1) · s/2 = (${n(H.P[1].N,0)} − ${n(H.P[0].N,0)}) · ${n(I.sep)}/2 = ${n(H.coup,0)} daN·m
+${mk},total = Σ${mk} + par = ${n(S(pl==="y"?"Mt":"Ml"),0)} + ${n(H.coup,0)} = ${n(pl==="y"?H.My:H.Mx,0)} daN·m</div>`;
+      }
+      h += `<div class="eq">Solicitaciones totales a nivel del terreno:
+   Mℓ = ${n(H.Mx,0)} daN·m    Vℓ = ${n(H.Fx,1)} daN
+   Mt = ${n(H.My,0)} daN·m    Vt = ${n(H.Fy,1)} daN
+   ΣN = ${n(H.Nsum,0)} daN</div>`;
+      return;
+    }
+    h += `<h3>${esc(H.nombre)} <span class="note">(${H.tipo==="E"?"excepcional":"normal"})</span></h3><p>${esc(H.desc)}.</p>
+     <table><tr><th>Carga</th><th class="n">Fx (daN)</th><th class="n">Fy (daN)</th><th class="n">h (m)</th><th class="n">Fx·h (daN·m)</th><th class="n">Fy·h (daN·m)</th></tr>
+     ${H.forces.map(F=>`<tr><td>${esc(F.desc)}</td><td class="n">${n(F.Fx,1)}</td><td class="n">${n(F.Fy,1)}</td><td class="n">${n(F.h)}</td><td class="n">${n(F.Fx*F.h,0)}</td><td class="n">${n(F.Fy*F.h,0)}</td></tr>`).join("")}
+     <tr><th>Total</th><th class="n">${n(H.Fx,1)}</th><th class="n">${n(H.Fy,1)}</th><th></th><th class="n">${n(H.Mx,0)}</th><th class="n">${n(H.My,0)}</th></tr></table>`;
+  });
+  if (I.modo==="linea" && R.beta) h += `<p class="note">Con desvío β, cada conductor aporta 2·T·sen(β/2) = 2·T·${n(Math.sin(R.beta/2),4)} sobre la bisectriz, y el viento sobre el conductor se proyecta con cos(β/2) = ${n(Math.cos(R.beta/2),4)}.</p>`;
+
+  // 7 poste
+  h += `<h2>7. Verificación del poste</h2><p>El momento en el empotramiento se reduce a una fuerza equivalente aplicada a 0,25 m de la cima, que es el punto de ensayo IRAM:</p>
+    <div class="eq">hr = hl − 0,25 = ${n(R.hl)} − 0,25 = ${n(R.href)} m
+Feq = Σ(F·h) / hr = M en el terreno / hr</div>`;
+  if (!d){
+    h += `<div class="eq">Condición:  Feq = √(Feq,x² + Feq,y²) ≤ R / CS</div><table><tr><th>Hipótesis</th><th class="n">Feq,x</th><th class="n">Feq,y</th><th class="n">Feq (daN)</th><th class="n">R/CS (daN)</th><th class="n">Aprovech.</th><th>Resultado</th></tr>
+      ${R.hyps.map(H=>`<tr><td>${esc(H.nombre)}</td><td class="n">${n(H.Feqx,1)}</td><td class="n">${n(H.Feqy,1)}</td><td class="n">${n(H.Feq,1)}</td><td class="n">${n(I.R,0)}/${n(H.CS)} = ${n(H.Radm,0)}</td><td class="n">${n(H.utilP*100,0)} %</td><td>${okTxt(H.okP)}</td></tr>`).join("")}</table>`;
+  } else {
+    h += `<div class="eq">Poste doble, interacción lineal:  Feq,plano / (kpl·R/CS) + Feq,perp / (kpe·R/CS) ≤ 1</div><table><tr><th>Hipótesis</th><th class="n">Feq,plano</th><th class="n">R plano/CS</th><th class="n">Feq,perp</th><th class="n">R perp/CS</th><th class="n">Interacción</th><th>Resultado</th></tr>
+      ${R.hyps.map(H=>`<tr><td>${esc(H.nombre)}</td><td class="n">${n(H.Fpl,1)}</td><td class="n">${n(H.Rpl,0)}</td><td class="n">${n(H.Fpe,1)}</td><td class="n">${n(H.Rpe,0)}</td><td class="n">${n(H.utilP,3)}</td><td>${okTxt(H.okP)}</td></tr>`).join("")}</table>`;
+  }
+
+  // 8 fundación
+  h += `<h2>8. Verificación de la fundación – Método de Sulzberger</h2>
+   <h3>8.1 Geometría adoptada</h3>
+   <p>${I.fmodo==="auto"?`Dimensionado automático. La profundidad se fija en t = e + ${n(I.tFondo)} m y el lado se aumenta de a 5 cm, desde el mínimo constructivo (${n(R.aMin)}${d?" × "+n(R.bMin):""} m: Ø base + 0,30 m${d?" + separación":""}), hasta que se cumplen todas las condiciones.`:"Verificación de las medidas ingresadas."}</p>
+   <table><tr><th>Lado a${d?" (en el plano de los postes)":""}</th><td class="n">${n(F.a)} m</td><th>Lado b</th><td class="n">${n(F.b)} m</td></tr>
+   <tr><th>Profundidad t</th><td class="n">${n(F.t)} m</td><th>Volumen de excavación a·b·t</th><td class="n">${n(F.Vexc,3)} m³</td></tr>
+   <tr><th>Volumen ocupado por el poste</th><td class="n">${n(F.Vpos,3)} m³</td><th>Volumen de hormigón</th><td class="n">${n(F.Vh,3)} m³</td></tr></table>
+   <div class="eq">Vhormigón = a·b·t − n·π·Ømed²/4·e = ${n(F.a)}·${n(F.b)}·${n(F.t)} − ${R.n}·π·${n(R.Dmemp,3)}²/4·${n(I.e)} = ${n(F.Vh,3)} m³
+Phormigón = Vh · γ = ${n(F.Vh,3)} · ${n(I.gH,0)} · 0,981 = ${n(F.Ph,0)} daN</div>
+   <h3>8.2 Coeficientes del terreno</h3>
+   <p>El coeficiente de compresibilidad crece linealmente con la profundidad. A partir del valor C a 2 m:</p>
+   <div class="eq">Ct = C · t / 2 = ${sci(R.Cd)} · ${n(F.t)} / 2 = ${sci(F.Ct)} daN/m³   (paredes laterales, a la profundidad t)
+Cb = ${n(I.cbF)} · Ct = ${sci(F.Cb)} daN/m³   (fondo)</div>
+   <h3>8.3 Expresiones</h3>
+   <div class="eq">Momento de vuelco respecto del punto de giro O (a 2/3·t bajo el terreno):
+   Mv = Σ F · (h + 2/3·t) = M(terreno) + V · 2/3·t
+Momento de encastramiento lateral (reacción de las paredes):
+   Ms = b · t³ / 36 · Ct · tg α
+Momento de fondo (reacción de la base por el peso total G):
+   Mb = G · a · [0,5 − 0,47 · √( G / (b · a² · Cb · tg α) )]
+   (a = lado paralelo a la fuerza, b = lado perpendicular)
+Condición de estabilidad:
+   Ms + Mb ≥ s · Mv     con s = f(Ms/Mb) según la tabla de Sulzberger (1,5 → 1,0)</div>
+   <table><tr><th class="n">Ms/Mb</th>${STAB.map(r=>`<td class="n">${n(r[0],1)}</td>`).join("")}</tr><tr><th class="n">s</th>${STAB.map(r=>`<td class="n">${n(r[1],3)}</td>`).join("")}</tr></table>`;
+  R.hyps.forEach((H,i) => {
+    const r = F.res[i];
+    h += `<h3>8.${4+i} ${esc(H.nombre)}</h3>
+     <div class="eq">G = cargas permanentes + hormigón = ${n(H.Gv,0)} + ${n(F.Ph,0)} = ${n(r.G,0)} daN
+Mv,x = Mℓ + Vℓ · 2/3·t = ${n(H.Mx,0)} + ${n(H.Fx,1)} · 2/3 · ${n(F.t)} = ${n(r.Mvx,0)} daN·m
+Mv,y = Mt + Vt · 2/3·t = ${n(H.My,0)} + ${n(H.Fy,1)} · 2/3 · ${n(F.t)} = ${n(r.Mvy,0)} daN·m${d?"":`
+Mv = √(Mv,x² + Mv,y²) = ${n(Math.hypot(r.Mvx,r.Mvy),0)} daN·m   (bloque cuadrado: se verifica la resultante)`}</div>`;
+    r.dirs.forEach(D => {
+      h += `${d?`<p><b>Dirección ${D.lab}</b>: a = ${n(D.ap)} m (paralelo a la fuerza), b = ${n(D.bp)} m</p>`:""}
+      <div class="eq">Ms = ${n(D.bp)} · ${n(F.t)}³ / 36 · ${sci(F.Ct)} · ${n(I.tga,3)} = ${n(D.Ms,0)} daN·m
+Mb = ${n(r.G,0)} · ${n(D.ap)} · [0,5 − 0,47·√(${n(r.G,0)} / (${n(D.bp)}·${n(D.ap)}²·${sci(F.Cb)}·${n(I.tga,3)}))]
+   = ${n(r.G,0)} · ${n(D.ap)} · [0,5 − 0,47·${n(Math.sqrt(D.term),4)}] = ${n(D.Mb,0)} daN·m${D.Mb<=0?"   (se toma Mb = 0)":""}
+Ms/Mb = ${isFinite(D.ratio)?n(D.ratio,3):"∞"}  →  s = ${n(D.s,3)}
+Ms + Mb = ${n(D.Mr,0)} daN·m   ${D.ok?"≥":"<"}   s·Mv = ${n(D.s,3)} · ${n(D.Mv,0)} = ${n(D.req,0)} daN·m   →   ${D.ok?"VERIFICA":"NO VERIFICA"}
+Coeficiente de seguridad al vuelco (Ms+Mb)/Mv = ${n(D.FS,2)}</div>`;
+    });
+  });
+
+  // 9 presión
+  h += `<h2>9. Presión sobre el terreno</h2><div class="eq">σ = G / (a·b)  ≤  σadm = ${n(I.sig)} kg/cm²</div>
+   <table><tr><th>Hipótesis</th><th class="n">G (daN)</th><th class="n">σ (kg/cm²)</th><th>Resultado</th></tr>
+   ${R.hyps.map((H,i)=>`<tr><td>${esc(H.nombre)}</td><td class="n">${n(F.res[i].G,0)}</td><td class="n">${n(F.res[i].sig,3)}</td><td>${okTxt(F.res[i].sig<=I.sig+1e-9)}</td></tr>`).join("")}</table>
+   <p class="note">Presión media. En el método de Sulzberger la excentricidad de la reacción del fondo ya está contemplada en Mb con el giro limitado a tg α.</p>`;
+
+  // 10 conclusiones
+  const pOk = R.hyps.every(H=>H.okP);
+  h += `<h2>10. Resultados y conclusiones</h2><table>
+   <tr><th>Poste</th><td>${d?"Doble ":""}HºAº ${n(I.L)}/${n(I.R,0)} – aprovechamiento máx. ${n(Math.max(...R.hyps.map(H=>H.utilP))*100,0)} %</td><td>${okTxt(pOk)}</td></tr>
+   <tr><th>Fundación (a × b × t)</th><td><b>${n(F.a)} × ${n(F.b)} × ${n(F.t)} m</b> – hormigón ${n(F.Vh,2)} m³ (excavación ${n(F.Vexc,2)} m³)</td><td>${okTxt(F.okSulz)}</td></tr>
+   <tr><th>Presión en la base</th><td>σ máx = ${n(F.sigMax,3)} kg/cm² ≤ ${n(I.sig)} kg/cm²</td><td>${okTxt(F.okSig)}</td></tr></table>
+   <p>${R.ok?"La estructura y su fundación <b>verifican</b> para todas las hipótesis analizadas.":"<b>La estructura no verifica</b> en al menos una condición. Revisar el poste, las dimensiones de la fundación o los datos de entrada."}</p>`;
+  if (R.warn.length) h += `<p class="bad">Advertencias:</p><ul>${R.warn.map(w=>`<li>${esc(w)}</li>`).join("")}</ul>`;
+  h += `<h2>11. Observaciones</h2><ul class="note">
+   <li>Se verificaron las hipótesis principales (viento máximo y corte de conductor). Cuando la especificación del proyecto lo pida, se deben analizar además el viento oblicuo y las hipótesis de montaje.</li>
+   <li>Valores de referencia que deben confirmarse: velocidad básica de viento de la zona (Chaco), factores de ráfaga G, coeficiente C del suelo (preferentemente con estudio geotécnico) y datos del poste del fabricante.</li>
+   <li>Hormigón de la fundación: H-13 o superior. El poste se aploma y se fija con cuñas antes del llenado. Con napa freática alta, conviene considerar el peso sumergido del hormigón.</li></ul>`;
+  if (word) h = h.replace("<h2>8.", `<p style="text-align:center"><img src="esquema.png" width="560" height="390"></p><h2>8.`);
+  else h = h.replace("<h2>8.", `<div style="text-align:center;margin:8px 0">${sketchSVG(R)}</div><h2>8.`);
+  return h;
+}
+
+/* ============================ RENDER ============================ */
+let RES = null;
+function render(R){
+  const F = R.F;
+  if (!F || !R.hyps.length){ $("kpis").innerHTML = `<div class="kpi bad"><div class="l">Sin hipótesis</div><div class="v">Cargá datos</div></div>`; $("memoria").innerHTML=""; $("sketch").innerHTML=""; $("resTabla").innerHTML=""; return; }
+  const pU = Math.max(...R.hyps.map(h=>h.utilP));
+  $("kpis").innerHTML = `
+    <div class="kpi ${R.ok?"ok":"bad"}"><div class="l">Estado general</div><div class="v">${R.ok?"Verifica":"No verifica"}</div></div>
+    <div class="kpi"><div class="l">Fundación a × b × t</div><div class="v">${f(F.a)} × ${f(F.b)} × ${f(F.t)} m</div></div>
+    <div class="kpi"><div class="l">Hormigón / excavación</div><div class="v">${f(F.Vh)} / ${f(F.Vexc)} m³</div></div>
+    <div class="kpi ${pU<=1?"ok":"bad"}"><div class="l">Aprovechamiento del poste</div><div class="v">${f(pU*100,0)} %</div></div>
+    <div class="kpi ${F.okSulz?"ok":"bad"}"><div class="l">Sulzberger: s·Mv / (Ms+Mb)</div><div class="v">${f(F.utilMax*100,0)} %</div></div>
+    <div class="kpi ${F.okSig?"ok":"bad"}"><div class="l">σ máx / σadm (kg/cm²)</div><div class="v">${f(F.sigMax,2)} / ${f(R.I.sig,2)}</div></div>`;
+  let t = `<table class="rows" style="font-size:12.5px"><thead><tr><th>Hipótesis</th><th>Dirección</th><th>Mv (daN·m)</th><th>Ms</th><th>Mb</th><th>s</th><th>Ms+Mb ≥ s·Mv</th><th>FS vuelco</th></tr></thead><tbody>`;
+  R.hyps.forEach((h,i) => F.res[i].dirs.forEach(D => t += `<tr><td>${esc(h.nombre)}</td><td>${D.lab}</td><td>${f(D.Mv,0)}</td><td>${f(D.Ms,0)}</td><td>${f(D.Mb,0)}</td><td>${f(D.s,3)}</td><td style="color:${D.ok?"var(--ok)":"var(--bad)"};font-weight:600">${f(D.Mr,0)} ${D.ok?"≥":"<"} ${f(D.req,0)}</td><td>${f(D.FS)}</td></tr>`));
+  t += `</tbody></table>`;
+  if (R.warn.length) t += `<div class="hint" style="color:var(--warn);background:var(--warn-soft);padding:6px 8px;border-radius:5px;margin-top:8px">${R.warn.map(esc).join("<br>")}</div>`;
+  $("resTabla").innerHTML = t;
+  $("sketch").innerHTML = sketchSVG(R);
+  $("memoria").innerHTML = memoriaHTML(R, false);
+}
+function calc(){
+  try { RES = calcular(leer()); render(RES); }
+  catch(err){ console.error(err); $("kpis").innerHTML = `<div class="kpi bad"><div class="l">Error</div><div class="v" style="font-size:13px">${esc(err.message)}</div></div>`; }
+}
+
+/* ============================ EXPORTAR A WORD ============================ */
+function svgToPngB64(svg){
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => { const c = document.createElement("canvas"); c.width = 1320; c.height = 920; const x = c.getContext("2d");
+      x.fillStyle = "#fff"; x.fillRect(0,0,c.width,c.height); x.drawImage(img, 0, 0, c.width, c.height); res(c.toDataURL("image/png").split(",")[1]); };
+    img.onerror = rej;
+    img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+  });
+}
+const b64utf8 = s => { const b = new TextEncoder().encode(s); let bin = ""; for (let i=0;i<b.length;i+=0x8000) bin += String.fromCharCode.apply(null, b.subarray(i,i+0x8000)); return btoa(bin); };
+const wrap76 = s => s.replace(/.{76}/g, "$&\r\n");
+async function construirWord(R){
+  let png = null; try { png = await svgToPngB64(sketchSVG(R)); } catch(e){ console.warn("Sin esquema en Word", e); }
+  let body = memoriaHTML(R, true);
+  if (!png) body = body.replace(/<p style="text-align:center"><img src="esquema.png"[^>]*><\/p>/, "");
+  const css = `@page WordSection1{size:21cm 29.7cm;margin:2cm 2cm 2cm 2.5cm;mso-page-orientation:portrait}
+    div.WordSection1{page:WordSection1}
+    body{font-family:Calibri,Arial,sans-serif;font-size:10.5pt;color:#1d232b}
+    h1{font-size:15pt;text-align:center;color:#14365f;margin:0 0 12pt}
+    h2{font-size:12.5pt;color:#14365f;border-bottom:1px solid #9aa5b4;margin:16pt 0 6pt;padding-bottom:2pt}
+    h3{font-size:11pt;margin:10pt 0 4pt}
+    p,li{margin:3pt 0}
+    table{border-collapse:collapse;width:100%;margin:4pt 0 8pt}
+    th,td{border:1px solid #9aa5b4;padding:2pt 5pt;font-size:9.5pt;vertical-align:top;text-align:left}
+    th{background:#e6ecf3}
+    td.n,th.n{text-align:right}
+    .eq{font-family:Consolas,"Courier New",monospace;font-size:9pt;background:#f2f5f9;border-left:3pt solid #1f5fa8;padding:4pt 8pt;margin:4pt 0;white-space:pre-wrap}
+    .ok{color:#1e7a46;font-weight:bold}.bad{color:#b3261e;font-weight:bold}.note{font-size:9pt;color:#5d6672}`;
+  // En Word, white-space:pre-wrap no siempre se respeta: convertir saltos y sangrías dentro de .eq
+  body = body.replace(/<div class="eq">([\s\S]*?)<\/div>/g, (m, inner) => `<p class="eq">${inner.replace(/\n/g,"<br>").replace(/ {2,}/g, s => "&nbsp;".repeat(s.length))}</p>`);
+  const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><title>Memoria de cálculo – Fundación</title>
+<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom><w:DoNotOptimizeForBrowser/></w:WordDocument></xml><![endif]-->
+<style>${css}</style></head><body><div class="WordSection1">${body}</div></body></html>`;
+  const B = "----=_NextPart_FundMT_" + Date.now();
+  let mht = `MIME-Version: 1.0\r\nContent-Type: multipart/related; boundary="${B}"; type="text/html"\r\n\r\n`;
+  mht += `--${B}\r\nContent-Location: file:///C:/memoria/memoria.htm\r\nContent-Transfer-Encoding: base64\r\nContent-Type: text/html; charset="utf-8"\r\n\r\n${wrap76(b64utf8(html))}\r\n\r\n`;
+  if (png) mht += `--${B}\r\nContent-Location: file:///C:/memoria/esquema.png\r\nContent-Transfer-Encoding: base64\r\nContent-Type: image/png\r\n\r\n${wrap76(png)}\r\n\r\n`;
+  mht += `--${B}--\r\n`;
+  return mht;
+}
+// .docx real: el documento contiene la memoria (MHT con el esquema) como altChunk; Word la convierte al abrirla.
+async function construirDocx(mht){
+  const z = new JSZip();
+  z.file("[Content_Types].xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="mht" ContentType="message/rfc822"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>`);
+  z.file("_rels/.rels", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`);
+  z.file("word/_rels/document.xml.rels", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="htmlChunk" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/aFChunk" Target="/word/afchunk.mht"/></Relationships>`);
+  z.file("word/document.xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><w:body><w:altChunk r:id="htmlChunk"/><w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1418" w:header="708" w:footer="708" w:gutter="0"/></w:sectPr></w:body></w:document>`);
+  z.file("word/afchunk.mht", mht);
+  return z.generateAsync({type:"blob"});
+}
+const enVisor = window.self !== window.top;
+async function exportarWord(){
+  if (!RES || !RES.F) return;
+  const msg = t => { $("wordMsg").textContent = t; };
+  const nom = (RES.I.piq || "estructura").replace(/[^\w\-]+/g, "_");
+  try {
+    msg("Generando…");
+    const mht = await construirWord(RES);
+    let blob, fname;
+    if (window.JSZip){ blob = await construirDocx(mht); fname = `Memoria_Fundacion_${nom}.docx`; }
+    else { blob = new Blob([mht], {type:"application/msword"}); fname = `Memoria_Fundacion_${nom}.doc`; }
+    const dl = window.claude && window.claude.use ? await window.claude.use("downloads") : null;
+    if (dl){
+      await dl.save({filename: fname, data: blob});
+      msg("Memoria descargada");
+    } else if (enVisor){
+      msg("La descarga no está disponible en esta vista");
+    } else {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob); a.download = fname;
+      document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+      msg("Memoria descargada");
+    }
+  } catch(err){
+    msg(err && err.code === "declined" ? "Descarga cancelada" : "No se pudo generar el archivo: " + (err && err.message || err));
+  }
+}
+
+/* ============================ INICIALIZACIÓN ============================ */
+function init(){
+  $("posteSel").innerHTML = POSTES.map(p => `<option value="${p}">${p.replace(".",",")}</option>`).join("") + `<option value="custom">Personalizado</option>`;
+  $("sueloSel").innerHTML = SUELOS.map((s,i) => `<option value="${i}">${s[0]}${s[1]!=null?` (C = ${f(s[1],1)}${s[2]!==s[1]?"–"+f(s[2],1):""} kg/cm³)`:""}</option>`).join("");
+  $("sueloSel").value = "3"; $("C").value = 4;
+  $("posteSel").value = "12/900";
+  const aplicarPoste = () => { const v = $("posteSel").value; if (v === "custom") return; const p = datosPoste(v);
+    $("L").value = p.L; $("R").value = p.R; $("Dc").value = p.dc; $("Db").value = p.db; $("Pp").value = p.peso; aplicarE(); };
+  const aplicarE = () => { if ($("eAuto").checked) $("e").value = (Math.round(0.1*num("L")*100)/100); $("e").readOnly = $("eAuto").checked; };
+  aplicarPoste();
+  disposicionTipica();
+  hipRow({n:"H1 – Normal", t:"N", ft:600, fl:0, d:0.25, g:0});
+  hipRow({n:"H2 – Excepcional", t:"E", ft:0, fl:450, d:0.25, g:0});
+
+  reacRow({n:"H1 – Viento máximo", t:"N", p:[{N:600, Vt:450, Vl:0, Mt:2500, Ml:0}, {N:3400, Vt:450, Vl:0, Mt:2500, Ml:0}]});
+  reacRow({n:"H2 – Corte de conductor", t:"E", p:[{N:1900, Vt:0, Vl:400, Mt:0, Ml:4300}, {N:1900, Vt:0, Vl:0, Mt:0, Ml:0}]});
+
+  const modoUI = () => { const m = radio("modo"); $("boxLinea").style.display = m === "linea" ? "" : "none"; $("boxDirecto").style.display = m === "directo" ? "" : "none"; $("boxReac").style.display = m === "reac" ? "" : "none"; };
+  const tipoUI = () => { const d = radio("tipo") === "doble"; $("dobleBox").style.display = d ? "" : "none"; $("lbB").style.display = d ? "" : "none";
+    document.querySelectorAll("#listReac tr.p2").forEach(tr => tr.hidden = !d);
+    $("lbA").firstChild.textContent = d ? "Lado a, en el plano de los postes (m)" : "Lado a = b (m)"; };
+  const fundUI = () => { const m = radio("fmodo") === "manual"; ["aM","bM","tM"].forEach(k => $(k).disabled = !m); };
+  modoUI(); tipoUI(); fundUI();
+
+  $("frm").addEventListener("input", calc);
+  $("frm").addEventListener("change", e => {
+    const id = e.target.id, nm = e.target.name;
+    if (id === "posteSel") aplicarPoste();
+    if (id === "L" || id === "eAuto") aplicarE();
+    if (["L","R","Dc","Db","Pp"].includes(id)) $("posteSel").value = "custom";
+    if (id === "sueloSel"){ const s = SUELOS[+e.target.value]; if (s[1] != null) $("C").value = s[1]; }
+    if (id === "tension") disposicionTipica();
+    if (id === "estr"){ $("orient").value = e.target.value === "term" ? "x" : "y"; if (!(e.target.value==="suspAng"||e.target.value==="retAng")) $("ang").value = 0; else if (num("ang")===0) $("ang").value = 15; }
+    if (nm === "modo") modoUI();
+    if (nm === "tipo") tipoUI();
+    if (nm === "fmodo"){ fundUI(); if (radio("fmodo")==="manual" && RES && RES.F){ $("aM").value = RES.F.a; $("bM").value = RES.F.b; $("tM").value = RES.F.t; } }
+    calc();
+  });
+  $("btnTipica").onclick = () => { disposicionTipica(); calc(); };
+  $("addCond").onclick = () => { condRow({tipo:"Al/Ac 50/8", dist:0.3, T:500}); calc(); };
+  $("addElem").onclick = () => { elemRow({n:"Equipo", p:0, a:0, cf:1.5, d:1.0}); calc(); };
+  $("addHip").onclick = () => { hipRow({n:"H"+($("tbHip").rows.length+1), t:"N", ft:0, fl:0, d:0.25, g:0}); calc(); };
+  $("addReac").onclick = () => { reacRow({n:"H"+($("listReac").children.length+1), t:"N", p:[{N:0,Vt:0,Vl:0,Mt:0,Ml:0},{N:0,Vt:0,Vl:0,Mt:0,Ml:0}]}); calc(); };
+  $("btnWord").onclick = exportarWord;
+  if (enVisor) $("btnPrint").hidden = true; else $("btnPrint").onclick = () => window.print();
+  calc();
+}
+init();
+</script>
